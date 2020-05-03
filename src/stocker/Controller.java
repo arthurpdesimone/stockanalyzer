@@ -602,52 +602,56 @@ public class Controller {
     public void calculate(){
         cashFlow.clear();
         for(String ticker : stocks.keySet()){
-            log("Calculating buy and sell opportunities for : " + ticker);
-            /** Initializing variables */
-            LinkedList<StockOperation> operations = new LinkedList<>();
-            ArrayList<Stock> stocksList = stocks.get(ticker);
-            /** Looping thourgh the considered timeframe */
-            for (int i = timeFrame;i >= 1; i--) {
-                Stock stock = stocksList.get(i);
-                Stock nextStock = stocksList.get(i-1);
-                //log("Comparing "+stock.getDate().toString()+ " to " + nextStock.getDate().toString());
-                /** Detects an up crossing */
-                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
-                    if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
-                        StockOperation buy = new StockOperation(nextStock);
-                        buy.setOperationType(BUY);
-                        operations.add(buy);
-                        log(nextStock.getTicker()+" Buy opportunity detected on "+nextStock.getDate().toString()+ " value : "+nextStock.getClose());
+            try{
+                log("Calculating buy and sell opportunities for : " + ticker);
+                /** Initializing variables */
+                LinkedList<StockOperation> operations = new LinkedList<>();
+                ArrayList<Stock> stocksList = stocks.get(ticker);
+                /** Looping thourgh the considered timeframe */
+                for (int i = timeFrame;i >= 1; i--) {
+                    Stock stock = stocksList.get(i);
+                    Stock nextStock = stocksList.get(i-1);
+                    //log("Comparing "+stock.getDate().toString()+ " to " + nextStock.getDate().toString());
+                    /** Detects an up crossing */
+                    if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
+                        if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
+                            StockOperation buy = new StockOperation(nextStock);
+                            buy.setOperationType(BUY);
+                            operations.add(buy);
+                            log(nextStock.getTicker()+" Buy opportunity detected on "+nextStock.getDate().toString()+ " value : "+nextStock.getClose());
+                        }
+                    }/** Detects a down crossing*/
+                    else if (nextStock.getMACD()<nextStock.getMACDSignal() && stock.getMACD()>stock.getMACDSignal()){
+                        if(operations.size() != 0 && operations.getLast().getOperationType().equals(BUY)){
+                            StockOperation sell = new StockOperation(nextStock);
+                            sell.setOperationType(SELL);
+                            operations.add(sell);
+                            log(nextStock.getTicker()+" Sell opportunity detected on "+nextStock.getDate().toString()+ " value : "+nextStock.getClose());
+                        }
                     }
-                }/** Detects a down crossing*/
-                else if (nextStock.getMACD()<nextStock.getMACDSignal() && stock.getMACD()>stock.getMACDSignal()){
-                    if(operations.size() != 0 && operations.getLast().getOperationType().equals(BUY)){
-                        StockOperation sell = new StockOperation(nextStock);
-                        sell.setOperationType(SELL);
-                        operations.add(sell);
-                        log(nextStock.getTicker()+" Sell opportunity detected on "+nextStock.getDate().toString()+ " value : "+nextStock.getClose());
+                    if(i==1){
+                        log("Last stock is "+nextStock.getDate().toString());
+                        if(operations.getLast().getOperationType().equals(BUY)){
+                            StockOperation sell = new StockOperation(nextStock);
+                            sell.setOperationType(SELL);
+                            operations.add(sell);
+                            log(nextStock.getTicker()+" Sell opportunity detected on "+nextStock.getDate().toString()+ " value : "+nextStock.getClose());
+                        }
                     }
                 }
-                if(i==1){
-                    log("Last stock is "+nextStock.getDate().toString());
-                    if(operations.getLast().getOperationType().equals(BUY)){
-                        StockOperation sell = new StockOperation(nextStock);
-                        sell.setOperationType(SELL);
-                        operations.add(sell);
-                        log(nextStock.getTicker()+" Sell opportunity detected on "+nextStock.getDate().toString()+ " value : "+nextStock.getClose());
+                final double[] profit = {1};
+                operations.forEach(stockOperation -> {
+                    if(stockOperation.getOperationType().equals(BUY)){
+                        profit[0] = profit[0] /stockOperation.getStock().getClose();
+                    }else {
+                        profit[0] = profit[0] * stockOperation.getStock().getClose();
                     }
-                }
+                    cashFlow.add(stockOperation);
+                });
+                log("Profit: "+(profit[0]-1)*100+"%");
+            }catch (Exception e){
+                log(e.getMessage());
             }
-            final double[] profit = {1};
-            operations.forEach(stockOperation -> {
-                if(stockOperation.getOperationType().equals(BUY)){
-                    profit[0] = profit[0] /stockOperation.getStock().getClose();
-                }else {
-                    profit[0] = profit[0] * stockOperation.getStock().getClose();
-                }
-                cashFlow.add(stockOperation);
-            });
-            log("Profit: "+(profit[0]-1)*100+"%");
         }
 
         fillTable();

@@ -121,7 +121,7 @@
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
                                                             </Label>
-                                                            <TextField fx:id="MACDFast" alignment="CENTER" prefWidth="50.0" text="17">
+                                                            <TextField fx:id="MACDFast" alignment="CENTER" prefWidth="50.0" text="12">
                                                                <HBox.margin>
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
@@ -131,7 +131,7 @@
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
                                                             </Label>
-                                                            <TextField fx:id="MACDSlow" alignment="CENTER" prefWidth="50.0" text="72">
+                                                            <TextField fx:id="MACDSlow" alignment="CENTER" prefWidth="50.0" text="26">
                                                                <HBox.margin>
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
@@ -141,7 +141,7 @@
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
                                                             </Label>
-                                                            <TextField fx:id="MACDSignal" alignment="CENTER" prefWidth="50.0" text="34">
+                                                            <TextField fx:id="MACDSignal" alignment="CENTER" prefWidth="50.0" text="9">
                                                                <HBox.margin>
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
