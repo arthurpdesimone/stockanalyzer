@@ -367,6 +367,7 @@ public class Controller {
             thread.setPriority(Thread.MAX_PRIORITY);
             thread.start();
         });
+
         /** Time frame actions */
         FiveDays.setOnAction(event -> {
             timeFrame = 5;
