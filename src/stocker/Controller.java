@@ -1,5 +1,9 @@
 package stocker;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -19,6 +23,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Rotate;
+import javafx.util.Duration;
 import stocker.stock.Stock;
 import stocker.stock.StockManager;
 import stocker.stock.StockOperation;
@@ -113,7 +118,7 @@ public class Controller {
     /** Map containing tickers and stocks*/
     HashMap<String,ArrayList<Stock>> stocks = StockManager.getInstance().getStocks();
     /** Time frame */
-    int timeFrame = 0;
+    int timeFrame = StockManager.getInstance().getTimeFrame();
     /** Stock timeline */
     ArrayList<StockOperation> cashFlow = StockManager.getInstance().getCashFlow();
     /** Download steps*/
@@ -125,6 +130,8 @@ public class Controller {
         currentTime = System.currentTimeMillis();
         /** Progress bar configuration*/
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
+        downloadProgressBar.getStylesheets().add(getClass().getResource("striped-progress.css").toExternalForm());
+
         /** Ticker list initialization */
         try {
             FileInputStream fis = new FileInputStream("stocks.txt");
@@ -216,10 +223,18 @@ public class Controller {
                         }
 
                     }
-                    Stock lastStock = stocks.get(ticker).get(0);
-                    Stock firstStock = stocks.get(ticker).get(stocks.get(ticker).size()-1);;
                     timeSeries.close();
-                    stocksList.getItems().add(ticker+"\t First stock: "+firstStock.getDate().toString()+"\t Last Stock:"+lastStock.getDate().toString()+"\t Entries: "+stocks.get(ticker).size());
+
+                    /** Stocks list fulfillment*/
+                    Stock lastStock = stocks.get(ticker).get(0);
+                    Stock firstStock = stocks.get(ticker).get(stocks.get(ticker).size()-1);
+                    SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+                    String firstDate = formatter.format(firstStock.getDate());
+                    String lastDate = formatter.format(lastStock.getDate());
+                    Platform.runLater(() -> {
+                        stocksList.getItems().add(ticker+" First stock: "+firstDate+"\t Last Stock: "+lastDate+"\t Entries: "+stocks.get(ticker).size());
+                    });
+
 
                     if(SMA1Enabled.isSelected()){
                         Thread.sleep(PAUSE);
@@ -372,32 +387,32 @@ public class Controller {
         FiveDays.setOnAction(event -> {
             timeFrame = 5;
             calculate();
-            fillChart(timeFrame);
+            fillChart();
         });
         OneMonth.setOnAction(event -> {
             timeFrame = 30;
             calculate();
-            fillChart(timeFrame);
+            fillChart();
         });
         ThreeMonths.setOnAction(event -> {
             timeFrame = 90;
             calculate();
-            fillChart(timeFrame);
+            fillChart();
         });
         SixMonths.setOnAction(event -> {
             timeFrame = 180;
             calculate();
-            fillChart(timeFrame);
+            fillChart();
         });
         OneYear.setOnAction(event -> {
             timeFrame = 365;
             calculate();
-            fillChart(timeFrame);
+            fillChart();
         });
         FiveYears.setOnAction(event -> {
             timeFrame = 1825;
             calculate();
-            fillChart(timeFrame);
+            fillChart();
         });
     }
 
@@ -413,7 +428,7 @@ public class Controller {
 
     /** Method to fill chart
      * @param timeframe The timeframe in days to consider */
-    private void fillChart(int timeframe){
+    private void fillChart(){
         /** Closes stock configuration */
         XYChart.Series closes = new XYChart.Series();
         XYChart.Series SMA1Series = new XYChart.Series();
@@ -461,7 +476,7 @@ public class Controller {
         RSIChart.getData().removeAll(Collections.singleton(RSIChart.getData().setAll()));
 
         /** Loop through all the stocks at a given timeframe*/
-        for (int i = timeframe;i >= 0; i--) {
+        for (int i = timeFrame;i >= 0; i--) {
             Stock stock = stocksList.get(i);
             String date = new SimpleDateFormat("yyyy-MM-dd", Locale. getDefault()). format(stock.getDate());
 

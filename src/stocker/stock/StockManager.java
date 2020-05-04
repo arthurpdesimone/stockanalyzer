@@ -8,6 +8,8 @@ public class StockManager {
     private static StockManager singleInstance = null;
     private HashMap<String, ArrayList<Stock>> stocks = new HashMap<>();
     private ArrayList<StockOperation> cashFlow = new ArrayList<>();
+    private ArrayList<Benchmark> benchmarks = new ArrayList<>();
+    private int timeFrame;
     /** private constructor restricted to this class itself */
     private StockManager() {
     }
@@ -26,4 +28,15 @@ public class StockManager {
         return cashFlow;
     }
 
+    public int getTimeFrame() {
+        return timeFrame;
+    }
+
+    public void setTimeFrame(int timeFrame) {
+        this.timeFrame = timeFrame;
+    }
+
+    public ArrayList<Benchmark> getBenchmarks() {
+        return benchmarks;
+    }
 }
