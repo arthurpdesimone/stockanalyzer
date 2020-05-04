@@ -88,6 +88,8 @@ public class Controller {
     @FXML
     ListView<String> tickerList;
     @FXML
+    ListView<String> stocksList;
+    @FXML
     TextField addTickerTextField;
     @FXML
     Button addTickerButton;
@@ -214,7 +216,10 @@ public class Controller {
                         }
 
                     }
+                    Stock lastStock = stocks.get(ticker).get(0);
+                    Stock firstStock = stocks.get(ticker).get(stocks.get(ticker).size()-1);;
                     timeSeries.close();
+                    stocksList.getItems().add(ticker+"\t First stock: "+firstStock.getDate().toString()+"\t Last Stock:"+lastStock.getDate().toString()+"\t Entries: "+stocks.get(ticker).size());
 
                     if(SMA1Enabled.isSelected()){
                         Thread.sleep(PAUSE);
@@ -639,6 +644,7 @@ public class Controller {
                         }
                     }
                 }
+                /** Simple profit calculation */
                 final double[] profit = {1};
                 operations.forEach(stockOperation -> {
                     if(stockOperation.getOperationType().equals(BUY)){
