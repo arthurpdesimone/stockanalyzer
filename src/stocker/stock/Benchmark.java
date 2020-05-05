@@ -33,7 +33,7 @@ public class Benchmark {
     }
 
     public int getOperationsBuyAndSell() {
-        return operations.size()/2;
+        return operations.size();
     }
 
     public String getProfit() {

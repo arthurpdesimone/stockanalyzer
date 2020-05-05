@@ -26,6 +26,7 @@ import stocker.stock.StockManager;
 import stocker.stock.StockOperation;
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -64,6 +65,13 @@ public class Controller {
     TextField RSI;
     @FXML
     ChoiceBox<String> tickerChoice;
+    /** Result total labels */
+    @FXML
+    Label operationsTotal;
+    @FXML
+    Label profitTotal;
+    @FXML
+    Label buyAndHoldTotal;
     /** Time Frame Buttons */
     @FXML
     Button FiveDays;
@@ -558,6 +566,34 @@ public class Controller {
         customiseFactoryBenchmark(benchmarksProfit);
     }
 
+    /** Method to fill total labels */
+    private void fillTotalsLabels(){
+        DecimalFormat df = new DecimalFormat("#.##");
+        final int[] operations = {0};
+        final double[] profit = {0.0};
+        final double[] buyAndHold = {0.0};
+        benchmarkList.forEach(benchmark -> {
+            int operationPartial = benchmark.getOperationsBuyAndSell();
+            operations[0] += operationPartial;
+
+            String profitPartial = benchmark.getProfit();
+            profitPartial = profitPartial.replace("%","");
+            profitPartial = profitPartial.replace(",",".");
+            double profitPartialDouble = Double.parseDouble(profitPartial);
+            profit[0] += profitPartialDouble;
+
+            String buyAndHoldPartial = benchmark.getBuyAndHold();
+            buyAndHoldPartial = buyAndHoldPartial.replace("%","");
+            buyAndHoldPartial = buyAndHoldPartial.replace(",",".");
+            double buyAndHoldPartialDouble = Double.parseDouble(buyAndHoldPartial);
+            buyAndHold[0] += buyAndHoldPartialDouble;
+        });
+
+        operationsTotal.setText(operations[0]+"");
+        profitTotal.setText(df.format(profit[0])+"%");
+        buyAndHoldTotal.setText(df.format(buyAndHold[0])+"%");
+    }
+
     private void customiseFactoryBenchmark(TableColumn<Benchmark, String> benchmarkColumn) {
         benchmarkColumn.setCellFactory(column -> {
             return new TableCell<Benchmark, String>() {
@@ -675,6 +711,8 @@ public class Controller {
     /** Main method to calculate buys and sells*/
     public void calculate(){
         cashFlow.clear();
+        benchmarkList.clear();
+        /** TODO Clear all lists on this point */
         for(String ticker : stocks.keySet()){
             try{
                 log("Calculating buy and sell opportunities for : " + ticker);
@@ -732,5 +770,6 @@ public class Controller {
         }
         fillOperationsTable();
         fillBenchmarkTable();
+        fillTotalsLabels();
     }
 }
