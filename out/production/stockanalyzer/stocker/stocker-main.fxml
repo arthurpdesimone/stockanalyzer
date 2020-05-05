@@ -302,6 +302,18 @@
                            <content>
                               <VBox>
                                  <children>
+                                    <HBox>
+                                       <children>
+                                          <Label text="Orders">
+                                             <font>
+                                                <Font size="16.0" />
+                                             </font>
+                                             <HBox.margin>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                       </children>
+                                    </HBox>
                                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
                                        <children>
                                           <TableView fx:id="operations" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -318,49 +330,7 @@
                                     </AnchorPane>
                                     <HBox>
                                        <children>
-                                          <Label text="Profit (%)">
-                                             <font>
-                                                <Font size="16.0" />
-                                             </font>
-                                             <HBox.margin>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                             </HBox.margin>
-                                          </Label>
-                                          <Label text="100%">
-                                             <HBox.margin>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                             </HBox.margin>
-                                             <font>
-                                                <Font size="16.0" />
-                                             </font>
-                                          </Label>
-                                          <Separator orientation="VERTICAL" />
-                                          <Label text="Percent Profitable (%)">
-                                             <font>
-                                                <Font size="16.0" />
-                                             </font>
-                                             <HBox.margin>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                             </HBox.margin>
-                                          </Label>
-                                          <Label text="100%">
-                                             <font>
-                                                <Font size="16.0" />
-                                             </font>
-                                             <HBox.margin>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                             </HBox.margin>
-                                          </Label>
-                                          <Separator orientation="VERTICAL" />
-                                          <Label text="Buy and Hold Return (%)">
-                                             <font>
-                                                <Font size="16.0" />
-                                             </font>
-                                             <HBox.margin>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                             </HBox.margin>
-                                          </Label>
-                                          <Label text="100%">
+                                          <Label text="Benchmarks">
                                              <font>
                                                 <Font size="16.0" />
                                              </font>
@@ -370,6 +340,21 @@
                                           </Label>
                                        </children>
                                     </HBox>
+                                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                       <children>
+                                          <TableView fx:id="benchmarks" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                             <columns>
+                                                <TableColumn fx:id="benchmarksStock" prefWidth="75.0" text="STOCK" />
+                                                <TableColumn fx:id="benchmarksOperations" prefWidth="75.0" text="OPERATIONS" />
+                                                <TableColumn fx:id="benchmarksProfit" prefWidth="75.0" text="PROFIT" />
+                                                <TableColumn fx:id="benchmarksBuyAndHold" prefWidth="75.0" text="BUY AND HOLD RETURN" />
+                                             </columns>
+                                             <columnResizePolicy>
+                                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                             </columnResizePolicy>
+                                          </TableView>
+                                       </children>
+                                    </AnchorPane>
                                  </children>
                               </VBox>
                            </content>

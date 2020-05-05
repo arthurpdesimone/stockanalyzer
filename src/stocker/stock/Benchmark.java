@@ -1,22 +1,26 @@
 package stocker.stock;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.LinkedList;
+
+import static stocker.stock.StockOperation.BUY;
 
 public class Benchmark {
 
-    private ArrayList<StockOperation> operations;
+    private LinkedList<StockOperation> operations;
     private ArrayList<Stock> stocks;
-    private int operationsBuyAndSell;
-    private double profit;
-    private double buyAndHold;
+
+    private static DecimalFormat df = new DecimalFormat("#.##");
+
     public Benchmark(){
     }
 
-    public ArrayList<StockOperation> getOperations() {
+    public LinkedList<StockOperation> getOperations() {
         return operations;
     }
 
-    public void setOperations(ArrayList<StockOperation> operations) {
+    public void setOperations(LinkedList<StockOperation> operations) {
         this.operations = operations;
     }
 
@@ -29,16 +33,31 @@ public class Benchmark {
     }
 
     public int getOperationsBuyAndSell() {
-        return operationsBuyAndSell;
+        return operations.size()/2;
     }
 
-    public double getProfit() {
-        return profit;
+    public String getProfit() {
+        final double[] profit = {1};
+        operations.forEach(stockOperation -> {
+            if(stockOperation.getOperationType().equals(BUY)){
+                profit[0] = profit[0] /stockOperation.getStock().getClose();
+            }else {
+                profit[0] = profit[0] * stockOperation.getStock().getClose();
+            }
+        });
+        return df.format((profit[0]-1)*100);
     }
 
 
-    public double getBuyAndHold() {
-        return buyAndHold;
+    public String getBuyAndHold() {
+        double firstClose = stocks.get(0).getClose();
+        double lastClose = stocks.get(stocks.size()-1).getClose();
+        return df.format((lastClose/firstClose-1)*100);
     }
+
+    public String getStock(){
+        return getStocks().get(0).getTicker();
+    }
+
 
 }

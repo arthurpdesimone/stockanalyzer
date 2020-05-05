@@ -6,6 +6,7 @@ import java.util.HashMap;
 public class StockManager {
     /** static variable single_instance of type Singleton */
     private static StockManager singleInstance = null;
+
     private HashMap<String, ArrayList<Stock>> stocks = new HashMap<>();
     private ArrayList<StockOperation> cashFlow = new ArrayList<>();
     private ArrayList<Benchmark> benchmarks = new ArrayList<>();

@@ -1,8 +1,5 @@
 package stocker;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
@@ -23,7 +20,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Rotate;
-import javafx.util.Duration;
+import stocker.stock.Benchmark;
 import stocker.stock.Stock;
 import stocker.stock.StockManager;
 import stocker.stock.StockOperation;
@@ -81,6 +78,16 @@ public class Controller {
     @FXML
     Button FiveYears;
     @FXML
+    TableView<Benchmark> benchmarks;
+    @FXML
+    TableColumn<Benchmark,String> benchmarksStock;
+    @FXML
+    TableColumn<Benchmark,String> benchmarksOperations;
+    @FXML
+    TableColumn<Benchmark,String> benchmarksProfit;
+    @FXML
+    TableColumn<Benchmark,String> benchmarksBuyAndHold;
+    @FXML
     TableView<StockOperation> operations;
     @FXML
     TableColumn<StockOperation,String> operationsDate;
@@ -121,10 +128,14 @@ public class Controller {
     int timeFrame = StockManager.getInstance().getTimeFrame();
     /** Stock timeline */
     ArrayList<StockOperation> cashFlow = StockManager.getInstance().getCashFlow();
+    /** Benchmarks */
+    ArrayList<Benchmark> benchmarkList = StockManager.getInstance().getBenchmarks();
     /** Download steps*/
     double downloadSteps = 0;
-    /***/
+    /** Observable cashflow */
     ObservableList<StockOperation> observableCashFlow;
+    /** Observable benchmark */
+    ObservableList<Benchmark> observableBenchmark;
     @FXML
     public void initialize(){
         currentTime = System.currentTimeMillis();
@@ -426,8 +437,7 @@ public class Controller {
         System.out.println(log);
     }
 
-    /** Method to fill chart
-     * @param timeframe The timeframe in days to consider */
+    /** Method to fill chart*/
     private void fillChart(){
         /** Closes stock configuration */
         XYChart.Series closes = new XYChart.Series();
@@ -517,9 +527,10 @@ public class Controller {
         if(RSIEnabled.isSelected()) RSIChart.getData().addAll(RSISeries);
     }
 
-    private void fillTable(){
+    private void fillOperationsTable(){
        reOrderListByDate(cashFlow);
        observableCashFlow = FXCollections.observableArrayList(cashFlow);
+       /** Operations table*/
        operations.setItems(observableCashFlow);
        operationsDate.setSortable(false);
        operationsStock.setSortable(false);
@@ -529,10 +540,52 @@ public class Controller {
        operationsStock.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getStock().getTicker()));
        operationsType.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getOperationType()));
        operationsValue.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getStock().getClose().toString()));
-       customiseFactory(operationsType);
+       customiseFactoryOperations(operationsType);
     }
 
-    private void customiseFactory(TableColumn<StockOperation, String> operationsStockColumn) {
+    private void fillBenchmarkTable(){
+        observableBenchmark = FXCollections.observableArrayList(benchmarkList);
+        /** Operations table*/
+        benchmarks.setItems(observableBenchmark);
+        benchmarksStock.setSortable(false);
+        benchmarksOperations.setSortable(false);
+        benchmarksProfit.setSortable(false);
+        benchmarksBuyAndHold.setSortable(false);
+        benchmarksStock.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getStock()));
+        benchmarksOperations.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getOperationsBuyAndSell()+""));
+        benchmarksProfit.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getProfit()+"%"));
+        benchmarksBuyAndHold.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getBuyAndHold()+"%"));
+        customiseFactoryBenchmark(benchmarksProfit);
+    }
+
+    private void customiseFactoryBenchmark(TableColumn<Benchmark, String> benchmarkColumn) {
+        benchmarkColumn.setCellFactory(column -> {
+            return new TableCell<Benchmark, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty ? "" : getItem().toString());
+                    setGraphic(null);
+
+                    TableRow<Benchmark> currentRow = getTableRow();
+
+                    if (!isEmpty()) {
+                        item = item.replace("%","");
+                        item = item.replace(",",".");
+                        double value = Double.valueOf(item);
+                        if(value < 0)
+                            currentRow.setStyle("-fx-background-color:lightcoral");
+                        else
+                            currentRow.setStyle("-fx-background-color:lightgreen");
+                    }
+                }
+            };
+        });
+    }
+
+
+
+    private void customiseFactoryOperations(TableColumn<StockOperation, String> operationsStockColumn) {
         operationsStockColumn.setCellFactory(column -> {
             return new TableCell<StockOperation, String>() {
                 @Override
@@ -605,7 +658,6 @@ public class Controller {
                     polygon.getTransforms().add(rotate);
                     polygon.setFill(Color.GREEN);
                 }
-                //pane.getChildren().add(circle);
                 pane.getChildren().add(polygon);
             }
         });
@@ -620,6 +672,7 @@ public class Controller {
         return label;
     }
 
+    /** Main method to calculate buys and sells*/
     public void calculate(){
         cashFlow.clear();
         for(String ticker : stocks.keySet()){
@@ -628,10 +681,14 @@ public class Controller {
                 /** Initializing variables */
                 LinkedList<StockOperation> operations = new LinkedList<>();
                 ArrayList<Stock> stocksList = stocks.get(ticker);
+                ArrayList<Stock> stocksTimeFrame = new ArrayList<>();
+
                 /** Looping thourgh the considered timeframe */
                 for (int i = timeFrame;i >= 1; i--) {
                     Stock stock = stocksList.get(i);
                     Stock nextStock = stocksList.get(i-1);
+                    /** Add the current stock to a time frame array*/
+                    stocksTimeFrame.add(stock);
                     //log("Comparing "+stock.getDate().toString()+ " to " + nextStock.getDate().toString());
                     /** Detects an up crossing */
                     if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
@@ -652,6 +709,8 @@ public class Controller {
                     }
                     if(i==1){
                         log("Last stock is "+nextStock.getDate().toString());
+                        stocksTimeFrame.add(nextStock);
+                        /** Sells last stock */
                         if(operations.getLast().getOperationType().equals(BUY)){
                             StockOperation sell = new StockOperation(nextStock);
                             sell.setOperationType(SELL);
@@ -660,22 +719,18 @@ public class Controller {
                         }
                     }
                 }
-                /** Simple profit calculation */
-                final double[] profit = {1};
-                operations.forEach(stockOperation -> {
-                    if(stockOperation.getOperationType().equals(BUY)){
-                        profit[0] = profit[0] /stockOperation.getStock().getClose();
-                    }else {
-                        profit[0] = profit[0] * stockOperation.getStock().getClose();
-                    }
-                    cashFlow.add(stockOperation);
-                });
-                log("Profit: "+(profit[0]-1)*100+"%");
+                /** Create a benchmark for this operation */
+                Benchmark b = new Benchmark();
+                b.setOperations(operations);
+                b.setStocks(stocksTimeFrame);
+                benchmarkList.add(b);
+
+                cashFlow.addAll(operations);
             }catch (Exception e){
                 log(e.getMessage());
             }
         }
-
-        fillTable();
+        fillOperationsTable();
+        fillBenchmarkTable();
     }
 }
