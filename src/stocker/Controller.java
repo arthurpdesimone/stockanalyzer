@@ -589,9 +589,10 @@ public class Controller {
             buyAndHold[0] += buyAndHoldPartialDouble;
         });
 
+        /** Profit is the average of the partial profits */
         operationsTotal.setText(operations[0]+"");
-        profitTotal.setText(df.format(profit[0])+"%");
-        buyAndHoldTotal.setText(df.format(buyAndHold[0])+"%");
+        profitTotal.setText(df.format(profit[0]/benchmarkList.size())+"%");
+        buyAndHoldTotal.setText(df.format(buyAndHold[0]/benchmarkList.size())+"%");
     }
 
     private void customiseFactoryBenchmark(TableColumn<Benchmark, String> benchmarkColumn) {
