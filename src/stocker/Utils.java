@@ -21,24 +21,13 @@ import static java.nio.file.StandardCopyOption.*;
 public class Utils {
 
 
-    public static void reOrderListByDate(ArrayList<StockOperation> stocks){
+    public static void reOrderListByDate(ArrayList<StockOperation> stocks) {
         stocks.sort(Comparator.comparing(StockOperation::getDate));
     }
 
     public static void download(String url, String fileName) throws IOException {
         try (InputStream in = URI.create(url).toURL().openStream()) {
-            Files.copy(in, Paths.get(fileName),REPLACE_EXISTING);
-        }
-    }
-
-    /** Method to search for old stocks */
-    public static void scanForOldStocks() throws FileNotFoundException {
-        HashMap<String, ArrayList<Stock>> stocks = StockManager.getInstance().getStocks();
-        FileInputStream fis = new FileInputStream("stocks.txt");
-        Scanner sc = new Scanner(fis);
-        while(sc.hasNextLine()) {
-            String ticker = sc.nextLine();
-            stocks.put(ticker, new ArrayList<>());
+            Files.copy(in, Paths.get(fileName), REPLACE_EXISTING);
         }
     }
 }

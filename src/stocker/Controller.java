@@ -139,12 +139,17 @@ public class Controller {
     ObservableList<StockOperation> observableCashFlow;
     /** Observable benchmark */
     ObservableList<Benchmark> observableBenchmark;
+    /** Clean-up csv files*/
+    private static String deleteExtension = ".csv";
     @FXML
     public void initialize(){
         currentTime = System.currentTimeMillis();
         /** Progress bar configuration*/
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
         downloadProgressBar.getStylesheets().add(getClass().getResource("striped-progress.css").toExternalForm());
+        /** CSV cleanup */
+        
+
         /** Ticker list initialization */
         try {
             FileInputStream fis = new FileInputStream("stocks.txt");
@@ -162,6 +167,28 @@ public class Controller {
                 MenuItem deleteItem = new MenuItem();
                 deleteItem.textProperty().bind(Bindings.format("Delete \"%s\"", cell.itemProperty()));
                 deleteItem.setOnAction(event -> tickerList.getItems().remove(cell.getItem()));
+                contextMenu.getItems().addAll(deleteItem);
+
+                cell.textProperty().bind(cell.itemProperty());
+
+                cell.emptyProperty().addListener((obs, wasEmpty, isNowEmpty) -> {
+                    if (isNowEmpty) {
+                        cell.setContextMenu(null);
+                    } else {
+                        cell.setContextMenu(contextMenu);
+                    }
+                });
+
+                return cell;
+            });
+
+            stocksList.setCellFactory(param -> {
+                ListCell<String> cell = new ListCell<>();
+                ContextMenu contextMenu = new ContextMenu();
+
+                MenuItem deleteItem = new MenuItem();
+                deleteItem.textProperty().bind(Bindings.format("Delete \"%s\"", cell.itemProperty()));
+                deleteItem.setOnAction(event -> stocksList.getItems().remove(cell.getItem()));
                 contextMenu.getItems().addAll(deleteItem);
 
                 cell.textProperty().bind(cell.itemProperty());
@@ -247,7 +274,6 @@ public class Controller {
                     Platform.runLater(() -> {
                         stocksList.getItems().add(ticker+" First stock: "+firstDate+"\t Last Stock: "+lastDate+"\t Entries: "+stocks.get(ticker).size());
                     });
-
 
                     if(SMA1Enabled.isSelected()){
                         Thread.sleep(PAUSE);
@@ -725,5 +751,14 @@ public class Controller {
         fillOperationsTable();
         fillBenchmarkTable();
         fillTotalsLabels();
+    }
+
+    class LogFilterFilter implements FilenameFilter
+    {
+        @Override
+        public boolean accept(File dir, String fileName)
+        {
+            return (fileName.endsWith(".csv"));
+        }
     }
 }
