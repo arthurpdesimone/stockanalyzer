@@ -148,7 +148,7 @@ public class Controller {
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
         downloadProgressBar.getStylesheets().add(getClass().getResource("striped-progress.css").toExternalForm());
         /** CSV cleanup */
-        
+
 
         /** Ticker list initialization */
         try {
@@ -157,7 +157,6 @@ public class Controller {
             while(sc.hasNextLine()) {
                 tickerList.getItems().add(sc.nextLine());
             }
-
 
             /** Context menu creation */
             tickerList.setCellFactory(param -> {
@@ -182,27 +181,6 @@ public class Controller {
                 return cell;
             });
 
-            stocksList.setCellFactory(param -> {
-                ListCell<String> cell = new ListCell<>();
-                ContextMenu contextMenu = new ContextMenu();
-
-                MenuItem deleteItem = new MenuItem();
-                deleteItem.textProperty().bind(Bindings.format("Delete \"%s\"", cell.itemProperty()));
-                deleteItem.setOnAction(event -> stocksList.getItems().remove(cell.getItem()));
-                contextMenu.getItems().addAll(deleteItem);
-
-                cell.textProperty().bind(cell.itemProperty());
-
-                cell.emptyProperty().addListener((obs, wasEmpty, isNowEmpty) -> {
-                    if (isNowEmpty) {
-                        cell.setContextMenu(null);
-                    } else {
-                        cell.setContextMenu(contextMenu);
-                    }
-                });
-
-                return cell;
-            });
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             log(e.toString());
