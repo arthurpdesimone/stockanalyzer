@@ -54,8 +54,6 @@ public class Controller {
     @FXML
     TextField SMA1;
     @FXML
-    TextField SMA2;
-    @FXML
     TextField MACDSlow;
     @FXML
     TextField MACDFast;
@@ -118,8 +116,6 @@ public class Controller {
     @FXML
     CheckBox SMA1Enabled;
     @FXML
-    CheckBox SMA2Enabled;
-    @FXML
     CheckBox MACDEnabled;
     @FXML
     CheckBox RSIEnabled;
@@ -159,6 +155,7 @@ public class Controller {
                 tickerList.getItems().add(sc.nextLine());
             }
 
+
             /** Context menu creation */
             tickerList.setCellFactory(param -> {
                 ListCell<String> cell = new ListCell<>();
@@ -196,7 +193,6 @@ public class Controller {
         downloadStocks.setOnAction(event -> {
             /** Steps count */
             if(SMA1Enabled.isSelected()) downloadSteps++;
-            if(SMA2Enabled.isSelected()) downloadSteps++;
             if(MACDEnabled.isSelected()) downloadSteps++;
             if(RSIEnabled.isSelected()) downloadSteps++;
             downloadSteps = downloadSteps*tickerList.getItems().size();
@@ -288,38 +284,6 @@ public class Controller {
                         downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
                     }
 
-                    if(SMA2Enabled.isSelected()){
-                        /**----------------------------- SMA 2 ----------------------------- */
-                        Thread.sleep(PAUSE);
-                        log("Downloading SMA2 for "+ticker);
-                        download(URL+"SMA&symbol="+ticker+"&interval=daily&time_period="+SMA2.getText()+"&series_type=close&datatype=csv&apikey="+API_KEY,ticker.replace(".SA","")+"-SMA2.csv");
-                        BufferedReader SMA2Series = new BufferedReader(new FileReader(ticker.replace(".SA","")+"-SMA2.csv"));
-                        String rowSMA2;
-                        while ((rowSMA2 = SMA2Series.readLine()) != null) {
-                            String[] data = rowSMA2.split(",");
-                            String date = data[0];
-                            String sma2 = data[1];
-                            String pattern = "yyyy-MM-dd";
-                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                            try {
-                                Date d = simpleDateFormat.parse(date);
-                                Double SMA2Value = Double.parseDouble(sma2);
-                                /** Loop through all the stocks looking for a matching date*/
-                                stocks.get(ticker).forEach(stock -> {
-                                    if(d.equals(stock.getDate())){
-                                        stock.setSMA2(SMA2Value);
-                                    }
-                                });
-                            } catch (ParseException e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-                        SMA2Series.close();
-                        log("Downloaded SMA2 for "+ticker);
-                        stepsConsumed[0]++;
-                        downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
-                    }
                     if(MACDEnabled.isSelected()){
                         /**----------------------------- MACD ----------------------------- */
                         Thread.sleep(PAUSE);
@@ -396,7 +360,7 @@ public class Controller {
                     e.printStackTrace();
                     log(e.getMessage());
                 }
-
+                Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
             }));
             thread.setPriority(Thread.MAX_PRIORITY);
             thread.start();
@@ -433,6 +397,7 @@ public class Controller {
             calculate();
             fillChart();
         });
+
     }
 
     /** Log routine
@@ -442,7 +407,6 @@ public class Controller {
         console.clear();
         console.setText(logger.toString());
         console.setScrollTop(Double.MAX_VALUE);
-        System.out.println(log);
     }
 
     /** Method to fill chart*/
@@ -450,7 +414,6 @@ public class Controller {
         /** Closes stock configuration */
         XYChart.Series closes = new XYChart.Series();
         XYChart.Series SMA1Series = new XYChart.Series();
-        XYChart.Series SMA2Series = new XYChart.Series();
         XYChart.Series MACDSeries = new XYChart.Series();
         XYChart.Series MACDHistogramSeries = new XYChart.Series();
         XYChart.Series MACDSignalSeries = new XYChart.Series();
@@ -467,10 +430,7 @@ public class Controller {
 
         /** SMAs creation*/
         if(SMA1Enabled.isSelected()){
-            SMA1Series.setName("SMA1");
-        }
-        if(SMA2Enabled.isSelected()) {
-            SMA2Series.setName("SMA2");
+            SMA1Series.setName("SMA");
         }
         /** MACD configuration */
         if(MACDEnabled.isSelected()){
@@ -507,10 +467,6 @@ public class Controller {
                 XYChart.Data<String,Number> SMA1Value = new XYChart.Data(date, stock.getSMA1());
                 SMA1Series.getData().add(SMA1Value);
             }
-            if(SMA2Enabled.isSelected()) {
-                XYChart.Data<String, Number> SMA2Value = new XYChart.Data(date, stock.getSMA2());
-                SMA2Series.getData().add(SMA2Value);
-            }
             if(MACDEnabled.isSelected()){
                 /** MACD Histogram */
                 XYChart.Data<String,Number> MACDValue = new XYChart.Data(date, stock.getMACD());
@@ -530,7 +486,6 @@ public class Controller {
 
         chart.getData().addAll(closes);
         if(SMA1Enabled.isSelected()) chart.getData().addAll(SMA1Series);
-        if(SMA2Enabled.isSelected()) chart.getData().addAll(SMA2Series);
         if(MACDEnabled.isSelected()) MACDChart.getData().addAll(MACDSeries,MACDHistogramSeries,MACDSignalSeries);
         if(RSIEnabled.isSelected()) RSIChart.getData().addAll(RSISeries);
     }

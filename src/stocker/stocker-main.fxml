@@ -56,7 +56,7 @@
                                                       <Separator prefWidth="200.0" />
                                                       <HBox>
                                                          <children>
-                                                            <CheckBox fx:id="SMA1Enabled" mnemonicParsing="false">
+                                                            <CheckBox fx:id="SMA1Enabled" mnemonicParsing="false" selected="true">
                                                                <HBox.margin>
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
@@ -66,32 +66,7 @@
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
                                                             </Label>
-                                                            <TextField fx:id="SMA1" alignment="CENTER" prefWidth="50.0" text="10">
-                                                               <HBox.margin>
-                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                               </HBox.margin>
-                                                            </TextField>
-                                                            <Label alignment="CENTER" text="Days">
-                                                               <HBox.margin>
-                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                               </HBox.margin>
-                                                            </Label>
-                                                         </children>
-                                                      </HBox>
-                                                      <Separator prefWidth="200.0" />
-                                                      <HBox>
-                                                         <children>
-                                                            <CheckBox fx:id="SMA2Enabled" mnemonicParsing="false">
-                                                               <HBox.margin>
-                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                               </HBox.margin>
-                                                            </CheckBox>
-                                                            <Label alignment="CENTER" text="Single Moving Average 2">
-                                                               <HBox.margin>
-                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                                               </HBox.margin>
-                                                            </Label>
-                                                            <TextField fx:id="SMA2" alignment="CENTER" prefWidth="50.0" text="20">
+                                                            <TextField fx:id="SMA1" alignment="CENTER" prefWidth="50.0" text="20">
                                                                <HBox.margin>
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
