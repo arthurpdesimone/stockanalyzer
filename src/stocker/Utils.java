@@ -38,8 +38,7 @@ public class Utils {
         Scanner sc = new Scanner(fis);
         while(sc.hasNextLine()) {
             String ticker = sc.nextLine();
-            stocks.put(ticker,new ArrayList<>());
+            stocks.put(ticker, new ArrayList<>());
         }
-        
     }
 }

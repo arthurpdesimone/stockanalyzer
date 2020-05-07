@@ -31,8 +31,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static stocker.Utils.download;
-import static stocker.Utils.reOrderListByDate;
+import static stocker.Utils.*;
 import static stocker.stock.StockOperation.BUY;
 import static stocker.stock.StockOperation.SELL;
 
@@ -146,7 +145,6 @@ public class Controller {
         /** Progress bar configuration*/
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
         downloadProgressBar.getStylesheets().add(getClass().getResource("striped-progress.css").toExternalForm());
-
         /** Ticker list initialization */
         try {
             FileInputStream fis = new FileInputStream("stocks.txt");
@@ -180,7 +178,7 @@ public class Controller {
             });
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            log(e.getMessage());
+            log(e.toString());
         }
 
         /** Add ticker button configuration */
@@ -358,7 +356,7 @@ public class Controller {
                     }
                 }catch (Exception e){
                     e.printStackTrace();
-                    log(e.getMessage());
+                    log(e.toString());
                 }
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
             }));
