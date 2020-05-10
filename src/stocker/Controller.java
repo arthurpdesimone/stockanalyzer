@@ -21,7 +21,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Rotate;
-import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import stocker.stock.Benchmark;
 import stocker.stock.Stock;
@@ -141,6 +140,10 @@ public class Controller {
     Tab buysAndSellsTab;
     @FXML
     WebView APIWebView;
+    @FXML
+    TextField APIKEYEditText;
+    @FXML
+    Button APIKEYSaveButton;
     /** Log variable */
     StringBuilder logger = new StringBuilder();
     /** Log to keep track of time events*/
@@ -161,33 +164,48 @@ public class Controller {
     ObservableList<StockOperation> observableCashFlow;
     /** Observable benchmark */
     ObservableList<Benchmark> observableBenchmark;
-
+    /** Properties object */
+    Properties properties = new Properties();
+    /** Properties location */
+    String propertiesFileName = "app.properties";
     @FXML
     public void initialize(){
+        /** Time setting */
+        currentTime = System.currentTimeMillis();
         /** Webview bugfix https://steakrecords.com/pt/338480-javafx-webview-recaptcha-wont-work-unsupported-browser-javafx-webview-recaptcha.html*/
         APIWebView.getEngine().setUserAgent("use required / intended UA string");
         /** Webview initialization*/
         APIWebView.getEngine().load(API_KEY_URL);
         /** Property file reading */
-        SingleSelectionModel<Tab> tabSelectionModel = mainTabPane.getSelectionModel();
-        Properties properties = new Properties();
-        String propertiesFileName = "app.properties";
-        try {
-            FileInputStream inputStream = new FileInputStream(propertiesFileName);
-            properties.load(inputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        propertiesSetup();
         API_KEY = properties.getProperty("api.key");
+        log("API Key: "+API_KEY);
+        /** API Key Workflow */
+        SingleSelectionModel<Tab> tabSelectionModel = mainTabPane.getSelectionModel();
         if(!API_KEY.isEmpty()){
             tabSelectionModel.select(databaseTab);
         }else{
             tabSelectionModel.select(APITab);
+            databaseTab.setDisable(true);
+            closesTab.setDisable(true);
+            MACDTab.setDisable(true);
+            RSITab.setDisable(true);
+            buysAndSellsTab.setDisable(true);
             controlsContainer.setVisible(false);
             controlsContainer.managedProperty().bind(controlsContainer.visibleProperty());
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("No API Key");
+            alert.setHeaderText(null);
+            alert.setContentText("It seems you haven't configured your API Key yet, use this page and fill it on the field below!");
+            alert.showAndWait();
         }
-        /** Time setting */
-        currentTime = System.currentTimeMillis();
+        /** Database initial setup*/
+        SMA1.setText(properties.getProperty("sma1"));
+        MACDFast.setText(properties.getProperty("macd.fast"));
+        MACDSlow.setText(properties.getProperty("macd.slow"));
+        MACDSignal.setText(properties.getProperty("macd.signal"));
+        RSI.setText(properties.getProperty("rsi"));
+
         /** Progress bar configuration*/
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
         downloadProgressBar.getStylesheets().add(getClass().getResource("striped-progress.css").toExternalForm());
@@ -226,7 +244,15 @@ public class Controller {
             e.printStackTrace();
             log(e.toString());
         }
-
+        /** API Save Button */
+        APIKEYSaveButton.setOnAction(event -> {
+            try(OutputStream outputStream = new FileOutputStream(propertiesFileName)){
+                properties.setProperty("api.key",APIKEYEditText.getText());
+                properties.store(outputStream, null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
         /** Add ticker button configuration */
         addTickerButton.setOnAction(event -> {
             tickerList.getItems().add(addTickerTextField.getText());
@@ -440,9 +466,14 @@ public class Controller {
         });
 
     }
-
-    public void APISetup(){
-
+    /** Method to load the properties file*/
+    public void propertiesSetup(){
+        try {
+            FileInputStream inputStream = new FileInputStream(propertiesFileName);
+            properties.load(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     /** Log routine
      * @param log The string to log*/
@@ -772,14 +803,5 @@ public class Controller {
         fillOperationsTable();
         fillBenchmarkTable();
         fillTotalsLabels();
-    }
-
-    class LogFilterFilter implements FilenameFilter
-    {
-        @Override
-        public boolean accept(File dir, String fileName)
-        {
-            return (fileName.endsWith(".csv"));
-        }
     }
 }
