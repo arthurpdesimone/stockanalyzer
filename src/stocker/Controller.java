@@ -147,9 +147,6 @@ public class Controller {
         /** Progress bar configuration*/
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
         downloadProgressBar.getStylesheets().add(getClass().getResource("striped-progress.css").toExternalForm());
-        /** CSV cleanup */
-
-
         /** Ticker list initialization */
         try {
             FileInputStream fis = new FileInputStream("stocks.txt");
@@ -211,19 +208,19 @@ public class Controller {
                     Thread.sleep(PAUSE);
                     tickerChoice.getItems().add(ticker);
                     stocks.put(ticker,new ArrayList<Stock>());
-                    String fileName = ticker.replace(".SA","")+".csv";
+                    //String fileName = ticker.replace(".SA","")+".csv";
                     /**----------------------------- STOCK ----------------------------- */
                     log("Downloading "+ticker);
                     /** Download stocks prices */
-                    download(URL+"TIME_SERIES_DAILY&symbol="+ticker+"&outputsize=full&datatype=csv&apikey="+API_KEY,ticker.replace(".SA","")+".csv");
-
+                    //download(URL+"TIME_SERIES_DAILY&symbol="+ticker+"&outputsize=full&datatype=csv&apikey="+API_KEY,ticker.replace(".SA","")+".csv");
+                    String stockString = downloadToString(URL+"TIME_SERIES_DAILY&symbol="+ticker+"&outputsize=full&datatype=csv&apikey="+API_KEY);
                     log("Downloaded "+ticker);
                     /** Progress update */
                     stepsConsumed[0]++;
                     downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
 
                     /** Stock download*/
-                    BufferedReader timeSeries = new BufferedReader(new FileReader(fileName));
+                    BufferedReader timeSeries = new BufferedReader(new StringReader(stockString));
                     String row;
                     while ((row = timeSeries.readLine()) != null) {
                         String[] data = row.split(",");
@@ -257,8 +254,8 @@ public class Controller {
                         Thread.sleep(PAUSE);
                         /**----------------------------- SMA 1 ----------------------------- */
                         log("Downloading SMA1 for "+ticker);
-                        download(URL+"SMA&symbol="+ticker+"&interval=daily&time_period="+SMA1.getText()+"&series_type=close&datatype=csv&apikey="+API_KEY,ticker.replace(".SA","")+"-SMA1.csv");
-                        BufferedReader SMA1Series = new BufferedReader(new FileReader(ticker.replace(".SA","")+"-SMA1.csv"));
+                        String stockSMAString = downloadToString(URL+"SMA&symbol="+ticker+"&interval=daily&time_period="+SMA1.getText()+"&series_type=close&datatype=csv&apikey="+API_KEY);
+                        BufferedReader SMA1Series = new BufferedReader(new StringReader(stockSMAString));
                         String rowSMA1;
                         while ((rowSMA1 = SMA1Series.readLine()) != null) {
                             String[] data = rowSMA1.split(",");
@@ -290,8 +287,8 @@ public class Controller {
                         /**----------------------------- MACD ----------------------------- */
                         Thread.sleep(PAUSE);
                         log("Downloading MACD for "+ticker);
-                        download(URL+"MACD&symbol="+ticker+"&fastperiod="+MACDFast.getText()+"&slowperiod="+MACDSlow.getText()+"&signalperiod="+MACDSignal.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY,ticker.replace(".SA","")+"-MACD.csv");
-                        BufferedReader MACDSeries = new BufferedReader(new FileReader(ticker.replace(".SA","")+"-MACD.csv"));
+                        String stockMACDString = downloadToString(URL+"MACD&symbol="+ticker+"&fastperiod="+MACDFast.getText()+"&slowperiod="+MACDSlow.getText()+"&signalperiod="+MACDSignal.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
+                        BufferedReader MACDSeries = new BufferedReader(new StringReader(stockMACDString));
                         String MACDRow;
                         while ((MACDRow = MACDSeries.readLine()) != null) {
                             String[] data = MACDRow.split(",");
@@ -329,8 +326,8 @@ public class Controller {
                         /**----------------------------- RSI ----------------------------- */
                         Thread.sleep(PAUSE);
                         log("Downloading RSI for "+ticker);
-                        download(URL+"RSI&symbol="+ticker+"&time_period="+RSI.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY,ticker.replace(".SA","")+"-RSI.csv");
-                        BufferedReader RSISeries = new BufferedReader(new FileReader(ticker.replace(".SA","")+"-RSI.csv"));
+                        String stockRSIString = downloadToString(URL+"RSI&symbol="+ticker+"&time_period="+RSI.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
+                        BufferedReader RSISeries = new BufferedReader(new StringReader(stockRSIString));
                         String RSIRow;
                         while ((RSIRow = RSISeries.readLine()) != null) {
                             String[] data = RSIRow.split(",");
