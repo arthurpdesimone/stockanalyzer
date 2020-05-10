@@ -159,7 +159,7 @@ public class Controller {
     /** Benchmarks */
     ArrayList<Benchmark> benchmarkList = StockManager.getInstance().getBenchmarks();
     /** Download steps*/
-    double downloadSteps = 0;
+    double downloadSteps = 0.0;
     /** Observable cashflow */
     ObservableList<StockOperation> observableCashFlow;
     /** Observable benchmark */
@@ -261,6 +261,10 @@ public class Controller {
 
         /** Main sequence download */
         downloadStocks.setOnAction(event -> {
+            downloadStocks.setDisable(true);
+            stocks.clear();
+            downloadSteps = 0.0;
+            downloadProgressBar.setProgress(0.0);
             /** Steps count */
             if(SMA1Enabled.isSelected()) downloadSteps++;
             if(MACDEnabled.isSelected()) downloadSteps++;
@@ -428,6 +432,7 @@ public class Controller {
                     log(e.toString());
                 }
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
+                downloadStocks.setDisable(false);
             }));
             thread.setPriority(Thread.MAX_PRIORITY);
             thread.start();
