@@ -20,16 +20,8 @@ import java.util.Scanner;
 import static java.nio.file.StandardCopyOption.*;
 
 public class Utils {
-
-
     public static void reOrderListByDate(ArrayList<StockOperation> stocks) {
         stocks.sort(Comparator.comparing(StockOperation::getDate));
-    }
-
-    public static void download(String url, String fileName) throws IOException {
-        try (InputStream in = URI.create(url).toURL().openStream()) {
-            Files.copy(in, Paths.get(fileName), REPLACE_EXISTING);
-        }
     }
 
     public static String downloadToString(String url) throws IOException {

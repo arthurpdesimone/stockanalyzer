@@ -7,6 +7,7 @@ public class StockManager {
     /** static variable single_instance of type Singleton */
     private static StockManager singleInstance = null;
 
+    private String API_KEY = "";
     private HashMap<String, ArrayList<Stock>> stocks = new HashMap<>();
     private ArrayList<StockOperation> cashFlow = new ArrayList<>();
     private ArrayList<Benchmark> benchmarks = new ArrayList<>();
@@ -39,5 +40,13 @@ public class StockManager {
 
     public ArrayList<Benchmark> getBenchmarks() {
         return benchmarks;
+    }
+
+    public String getAPI_KEY() {
+        return API_KEY;
+    }
+
+    public void setAPI_KEY(String API_KEY) {
+        this.API_KEY = API_KEY;
     }
 }

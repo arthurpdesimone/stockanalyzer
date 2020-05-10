@@ -17,9 +17,12 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Rotate;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import stocker.stock.Benchmark;
 import stocker.stock.Stock;
 import stocker.stock.StockManager;
@@ -37,9 +40,11 @@ import static stocker.stock.StockOperation.SELL;
 
 public class Controller {
     /** API KEY*/
-    String API_KEY = "D40ZO7YMXDL464DI";
+    String API_KEY = StockManager.getInstance().getAPI_KEY();
     /** API URL */
     String URL = "https://www.alphavantage.co/query?function=";
+    /** API KEY URL */
+    String API_KEY_URL = "https://www.alphavantage.co/support/#api-key";
     @FXML
     Button downloadStocks;
     @FXML
@@ -118,7 +123,24 @@ public class Controller {
     CheckBox MACDEnabled;
     @FXML
     CheckBox RSIEnabled;
-
+    @FXML
+    VBox controlsContainer;
+    @FXML
+    TabPane mainTabPane;
+    @FXML
+    Tab APITab;
+    @FXML
+    Tab databaseTab;
+    @FXML
+    Tab closesTab;
+    @FXML
+    Tab MACDTab;
+    @FXML
+    Tab RSITab;
+    @FXML
+    Tab buysAndSellsTab;
+    @FXML
+    WebView APIWebView;
     /** Log variable */
     StringBuilder logger = new StringBuilder();
     /** Log to keep track of time events*/
@@ -139,10 +161,32 @@ public class Controller {
     ObservableList<StockOperation> observableCashFlow;
     /** Observable benchmark */
     ObservableList<Benchmark> observableBenchmark;
-    /** Clean-up csv files*/
-    private static String deleteExtension = ".csv";
+
     @FXML
     public void initialize(){
+        /** Webview bugfix https://steakrecords.com/pt/338480-javafx-webview-recaptcha-wont-work-unsupported-browser-javafx-webview-recaptcha.html*/
+        APIWebView.getEngine().setUserAgent("use required / intended UA string");
+        /** Webview initialization*/
+        APIWebView.getEngine().load(API_KEY_URL);
+        /** Property file reading */
+        SingleSelectionModel<Tab> tabSelectionModel = mainTabPane.getSelectionModel();
+        Properties properties = new Properties();
+        String propertiesFileName = "app.properties";
+        try {
+            FileInputStream inputStream = new FileInputStream(propertiesFileName);
+            properties.load(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        API_KEY = properties.getProperty("api.key");
+        if(!API_KEY.isEmpty()){
+            tabSelectionModel.select(databaseTab);
+        }else{
+            tabSelectionModel.select(APITab);
+            controlsContainer.setVisible(false);
+            controlsContainer.managedProperty().bind(controlsContainer.visibleProperty());
+        }
+        /** Time setting */
         currentTime = System.currentTimeMillis();
         /** Progress bar configuration*/
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
@@ -208,11 +252,9 @@ public class Controller {
                     Thread.sleep(PAUSE);
                     tickerChoice.getItems().add(ticker);
                     stocks.put(ticker,new ArrayList<Stock>());
-                    //String fileName = ticker.replace(".SA","")+".csv";
                     /**----------------------------- STOCK ----------------------------- */
                     log("Downloading "+ticker);
                     /** Download stocks prices */
-                    //download(URL+"TIME_SERIES_DAILY&symbol="+ticker+"&outputsize=full&datatype=csv&apikey="+API_KEY,ticker.replace(".SA","")+".csv");
                     String stockString = downloadToString(URL+"TIME_SERIES_DAILY&symbol="+ticker+"&outputsize=full&datatype=csv&apikey="+API_KEY);
                     log("Downloaded "+ticker);
                     /** Progress update */
@@ -399,6 +441,9 @@ public class Controller {
 
     }
 
+    public void APISetup(){
+
+    }
     /** Log routine
      * @param log The string to log*/
     public void log(String log){
@@ -421,6 +466,7 @@ public class Controller {
         chart.getXAxis().setAutoRanging(true);
         chart.getYAxis().setAutoRanging(true);
         chart.setCreateSymbols(false);
+        RSIChart.setCreateSymbols(false);
         NumberAxis yAxis = (NumberAxis) chart.getYAxis();
         yAxis.setForceZeroInRange(false);
         String ticker = tickerChoice.getSelectionModel().getSelectedItem();
