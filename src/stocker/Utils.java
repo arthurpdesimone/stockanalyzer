@@ -4,10 +4,7 @@ import stocker.stock.Stock;
 import stocker.stock.StockManager;
 import stocker.stock.StockOperation;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,5 +28,13 @@ public class Utils {
             text = scanner.useDelimiter("\\A").next();
         }
         return text;
+    }
+
+    public static String convertExceptionToString(Exception e){
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        String sStackTrace = sw.toString(); // stack trace as a string
+        return sStackTrace;
     }
 }

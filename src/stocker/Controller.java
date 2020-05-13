@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -242,15 +243,21 @@ public class Controller {
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            log(e.toString());
+            log(convertExceptionToString(e));
         }
         /** API Save Button */
         APIKEYSaveButton.setOnAction(event -> {
             try(OutputStream outputStream = new FileOutputStream(propertiesFileName)){
+                /** Store API KEY*/
                 properties.setProperty("api.key",APIKEYEditText.getText());
                 properties.store(outputStream, null);
+                /** Enable tabs */
+                setTabsDisableFalse(databaseTab,closesTab,MACDTab,RSITab,buysAndSellsTab);
+                SingleSelectionModel<Tab> selectionModel = mainTabPane.getSelectionModel();
+                selectionModel.select(databaseTab);
             } catch (IOException e) {
                 e.printStackTrace();
+                log(convertExceptionToString(e));
             }
         });
         /** Add ticker button configuration */
@@ -261,10 +268,14 @@ public class Controller {
 
         /** Main sequence download */
         downloadStocks.setOnAction(event -> {
+            /** First actions */
             downloadStocks.setDisable(true);
+            stocksList.getItems().clear();
             stocks.clear();
             downloadSteps = 0.0;
             downloadProgressBar.setProgress(0.0);
+
+            setDisableTrue(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice);
             /** Steps count */
             if(SMA1Enabled.isSelected()) downloadSteps++;
             if(MACDEnabled.isSelected()) downloadSteps++;
@@ -277,163 +288,180 @@ public class Controller {
             /** Steps */
             final double[] stepsConsumed = {0.0};
 
-            Thread thread = new Thread(() -> tickerList.getItems().forEach(ticker -> {
+            Thread thread = new Thread(() -> {
                 try{
-                    Thread.sleep(PAUSE);
-                    tickerChoice.getItems().add(ticker);
-                    stocks.put(ticker,new ArrayList<Stock>());
-                    /**----------------------------- STOCK ----------------------------- */
-                    log("Downloading "+ticker);
-                    /** Download stocks prices */
-                    String stockString = downloadToString(URL+"TIME_SERIES_DAILY&symbol="+ticker+"&outputsize=full&datatype=csv&apikey="+API_KEY);
-                    log("Downloaded "+ticker);
-                    /** Progress update */
-                    stepsConsumed[0]++;
-                    downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
-
-                    /** Stock download*/
-                    BufferedReader timeSeries = new BufferedReader(new StringReader(stockString));
-                    String row;
-                    while ((row = timeSeries.readLine()) != null) {
-                        String[] data = row.split(",");
-                        String date = data[0];
-                        String close = data[4];
-                        String pattern = "yyyy-MM-dd";
-                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                        try {
-                            Date d = simpleDateFormat.parse(date);
-                            Double closeValue = Double.parseDouble(close);
-                            Stock stock = new Stock(ticker,closeValue,d);
-                            stocks.get(ticker).add(stock);
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-                    timeSeries.close();
-
-                    /** Stocks list fulfillment*/
-                    Stock lastStock = stocks.get(ticker).get(0);
-                    Stock firstStock = stocks.get(ticker).get(stocks.get(ticker).size()-1);
-                    SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-                    String firstDate = formatter.format(firstStock.getDate());
-                    String lastDate = formatter.format(lastStock.getDate());
-                    Platform.runLater(() -> {
-                        stocksList.getItems().add(ticker+" First stock: "+firstDate+"\t Last Stock: "+lastDate+"\t Entries: "+stocks.get(ticker).size());
-                    });
-
-                    if(SMA1Enabled.isSelected()){
+                    ObservableList<String> tickersToDownload = tickerList.getItems();
+                    for(int i = 0; i < tickersToDownload.size(); i++){
+                        String ticker = tickersToDownload.get(i);
+                        log("Waiting "+PAUSE+"ms");
                         Thread.sleep(PAUSE);
-                        /**----------------------------- SMA 1 ----------------------------- */
-                        log("Downloading SMA1 for "+ticker);
-                        String stockSMAString = downloadToString(URL+"SMA&symbol="+ticker+"&interval=daily&time_period="+SMA1.getText()+"&series_type=close&datatype=csv&apikey="+API_KEY);
-                        BufferedReader SMA1Series = new BufferedReader(new StringReader(stockSMAString));
-                        String rowSMA1;
-                        while ((rowSMA1 = SMA1Series.readLine()) != null) {
-                            String[] data = rowSMA1.split(",");
+                        tickerChoice.getItems().add(ticker);
+                        stocks.put(ticker,new ArrayList<Stock>());
+                        /**----------------------------- STOCK ----------------------------- */
+                        log("Downloading "+ticker);
+                        /** Download stocks prices */
+                        String stockString = downloadToString(URL+"TIME_SERIES_DAILY&symbol="+ticker+"&outputsize=full&datatype=csv&apikey="+API_KEY);
+                        log("Downloaded "+ticker);
+                        /** Progress update */
+                        stepsConsumed[0]++;
+                        downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
+
+                        /** Stock download*/
+                        BufferedReader timeSeries = new BufferedReader(new StringReader(stockString));
+                        timeSeries.readLine(); /** Skip the first line */
+                        String row;
+                        while ((row = timeSeries.readLine()) != null) {
+                            String[] data = row.split(",");
                             String date = data[0];
-                            String sma1 = data[1];
+                            String close = data[4];
                             String pattern = "yyyy-MM-dd";
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
                             try {
                                 Date d = simpleDateFormat.parse(date);
-                                Double SMA1Value = Double.parseDouble(sma1);
-                                /** Loop through all the stocks looking for a matching date*/
-                                stocks.get(ticker).forEach(stock -> {
-                                    if(d.equals(stock.getDate())){
-                                        stock.setSMA1(SMA1Value);
-                                    }
-                                });
+                                Double closeValue = Double.parseDouble(close);
+                                Stock stock = new Stock(ticker,closeValue,d);
+                                stocks.get(ticker).add(stock);
                             } catch (ParseException e) {
                                 e.printStackTrace();
+                                log(convertExceptionToString(e));
                             }
 
                         }
-                        SMA1Series.close();
-                        log("Downloaded SMA1 for "+ticker);
-                        stepsConsumed[0]++;
-                        downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
-                    }
+                        timeSeries.close();
 
-                    if(MACDEnabled.isSelected()){
-                        /**----------------------------- MACD ----------------------------- */
-                        Thread.sleep(PAUSE);
-                        log("Downloading MACD for "+ticker);
-                        String stockMACDString = downloadToString(URL+"MACD&symbol="+ticker+"&fastperiod="+MACDFast.getText()+"&slowperiod="+MACDSlow.getText()+"&signalperiod="+MACDSignal.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
-                        BufferedReader MACDSeries = new BufferedReader(new StringReader(stockMACDString));
-                        String MACDRow;
-                        while ((MACDRow = MACDSeries.readLine()) != null) {
-                            String[] data = MACDRow.split(",");
-                            String date = data[0];
-                            String macd = data[1];
-                            String macdHist = data[2];
-                            String macdSignal = data[3];
+                        /** Stocks list fulfillment*/
+                        Stock lastStock = stocks.get(ticker).get(0);
+                        Stock firstStock = stocks.get(ticker).get(stocks.get(ticker).size()-1);
+                        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+                        String firstDate = formatter.format(firstStock.getDate());
+                        String lastDate = formatter.format(lastStock.getDate());
+                        Platform.runLater(() -> {
+                            stocksList.getItems().add(ticker+" First stock: "+firstDate+"\t Last Stock: "+lastDate+"\t Entries: "+stocks.get(ticker).size());
+                        });
 
-                            String pattern = "yyyy-MM-dd";
-                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                            try {
-                                Date d = simpleDateFormat.parse(date);
-                                Double macdValue = Double.parseDouble(macd);
-                                Double macdHistValue = Double.parseDouble(macdHist);
-                                Double macdSignalValue = Double.parseDouble(macdSignal);
-                                /** Loop through all the stocks looking for a matching date*/
-                                stocks.get(ticker).forEach(stock -> {
-                                    if(d.equals(stock.getDate())){
-                                        stock.setMACD(macdValue);
-                                        stock.setMACDHist(macdHistValue);
-                                        stock.setMACDSignal(macdSignalValue);
-                                    }
-                                });
-                            } catch (ParseException e) {
-                                e.printStackTrace();
+                        if(SMA1Enabled.isSelected()){
+                            log("Waiting "+PAUSE+"ms");
+                            Thread.sleep(PAUSE);
+                            /**----------------------------- SMA 1 ----------------------------- */
+                            log("Downloading SMA1 for "+ticker);
+                            String stockSMAString = downloadToString(URL+"SMA&symbol="+ticker+"&interval=daily&time_period="+SMA1.getText()+"&series_type=close&datatype=csv&apikey="+API_KEY);
+                            BufferedReader SMA1Series = new BufferedReader(new StringReader(stockSMAString));
+                            SMA1Series.readLine(); /** Skip the first line */
+                            String rowSMA1;
+                            while ((rowSMA1 = SMA1Series.readLine()) != null) {
+                                String[] data = rowSMA1.split(",");
+                                String date = data[0];
+                                String sma1 = data[1];
+                                String pattern = "yyyy-MM-dd";
+                                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+                                try {
+                                    Date d = simpleDateFormat.parse(date);
+                                    Double SMA1Value = Double.parseDouble(sma1);
+                                    /** Loop through all the stocks looking for a matching date*/
+                                    stocks.get(ticker).forEach(stock -> {
+                                        if(d.equals(stock.getDate())){
+                                            stock.setSMA1(SMA1Value);
+                                        }
+                                    });
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                    log(convertExceptionToString(e));
+                                }
+
                             }
-
+                            SMA1Series.close();
+                            log("Downloaded SMA1 for "+ticker);
+                            stepsConsumed[0]++;
+                            downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
                         }
-                        MACDSeries.close();
-                        log("Downloaded MACD for "+ticker);
-                        stepsConsumed[0]++;
-                        downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
-                    }
-                    if(RSIEnabled.isSelected()){
-                        /**----------------------------- RSI ----------------------------- */
-                        Thread.sleep(PAUSE);
-                        log("Downloading RSI for "+ticker);
-                        String stockRSIString = downloadToString(URL+"RSI&symbol="+ticker+"&time_period="+RSI.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
-                        BufferedReader RSISeries = new BufferedReader(new StringReader(stockRSIString));
-                        String RSIRow;
-                        while ((RSIRow = RSISeries.readLine()) != null) {
-                            String[] data = RSIRow.split(",");
-                            String date = data[0];
-                            String rsi = data[1];
 
-                            String pattern = "yyyy-MM-dd";
-                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                            try {
-                                Date d = simpleDateFormat.parse(date);
-                                Double rsiValue = Double.parseDouble(rsi);
-                                /** Loop through all the stocks looking for a matching date*/
-                                stocks.get(ticker).forEach(stock -> {
-                                    if(d.equals(stock.getDate())){
-                                        stock.setRSI(rsiValue);
-                                    }
-                                });
-                            } catch (ParseException e) {
-                                e.printStackTrace();
+                        if(MACDEnabled.isSelected()){
+                            /**----------------------------- MACD ----------------------------- */
+                            log("Waiting "+PAUSE+"ms");
+                            Thread.sleep(PAUSE);
+                            log("Downloading MACD for "+ticker);
+                            String stockMACDString = downloadToString(URL+"MACD&symbol="+ticker+"&fastperiod="+MACDFast.getText()+"&slowperiod="+MACDSlow.getText()+"&signalperiod="+MACDSignal.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
+                            BufferedReader MACDSeries = new BufferedReader(new StringReader(stockMACDString));
+                            MACDSeries.readLine(); /** Skip the first line */
+                            String MACDRow;
+                            while ((MACDRow = MACDSeries.readLine()) != null) {
+                                String[] data = MACDRow.split(",");
+                                String date = data[0];
+                                String macd = data[1];
+                                String macdHist = data[2];
+                                String macdSignal = data[3];
+
+                                String pattern = "yyyy-MM-dd";
+                                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+                                try {
+                                    Date d = simpleDateFormat.parse(date);
+                                    Double macdValue = Double.parseDouble(macd);
+                                    Double macdHistValue = Double.parseDouble(macdHist);
+                                    Double macdSignalValue = Double.parseDouble(macdSignal);
+                                    /** Loop through all the stocks looking for a matching date*/
+                                    stocks.get(ticker).forEach(stock -> {
+                                        if(d.equals(stock.getDate())){
+                                            stock.setMACD(macdValue);
+                                            stock.setMACDHist(macdHistValue);
+                                            stock.setMACDSignal(macdSignalValue);
+                                        }
+                                    });
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                    log(convertExceptionToString(e));
+                                }
+
                             }
-
+                            MACDSeries.close();
+                            log("Downloaded MACD for "+ticker);
+                            stepsConsumed[0]++;
+                            downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
                         }
-                        RSISeries.close();
-                        log("Downloaded RSI for "+ticker);
-                        stepsConsumed[0]++;
-                        downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
+                        if(RSIEnabled.isSelected()){
+                            /**----------------------------- RSI ----------------------------- */
+                            log("Waiting "+PAUSE+"ms");
+                            Thread.sleep(PAUSE);
+                            log("Downloading RSI for "+ticker);
+                            String stockRSIString = downloadToString(URL+"RSI&symbol="+ticker+"&time_period="+RSI.getText()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
+                            BufferedReader RSISeries = new BufferedReader(new StringReader(stockRSIString));
+                            RSISeries.readLine(); /** Skip the first line */
+                            String RSIRow;
+                            while ((RSIRow = RSISeries.readLine()) != null) {
+                                String[] data = RSIRow.split(",");
+                                String date = data[0];
+                                String rsi = data[1];
+
+                                String pattern = "yyyy-MM-dd";
+                                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+                                try {
+                                    Date d = simpleDateFormat.parse(date);
+                                    Double rsiValue = Double.parseDouble(rsi);
+                                    /** Loop through all the stocks looking for a matching date*/
+                                    stocks.get(ticker).forEach(stock -> {
+                                        if(d.equals(stock.getDate())){
+                                            stock.setRSI(rsiValue);
+                                        }
+                                    });
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                    log(convertExceptionToString(e));
+                                }
+
+                            }
+                            RSISeries.close();
+                            log("Downloaded RSI for "+ticker);
+                            stepsConsumed[0]++;
+                            downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
+                        }
                     }
                 }catch (Exception e){
-                    e.printStackTrace();
-                    log(e.toString());
+                    log(convertExceptionToString(e));
                 }
+
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
                 downloadStocks.setDisable(false);
-            }));
+                setDisableFalse(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice);
+            });
             thread.setPriority(Thread.MAX_PRIORITY);
             thread.start();
         });
@@ -477,6 +505,7 @@ public class Controller {
             FileInputStream inputStream = new FileInputStream(propertiesFileName);
             properties.load(inputStream);
         } catch (IOException e) {
+            log(convertExceptionToString(e));
             e.printStackTrace();
         }
     }
@@ -656,8 +685,6 @@ public class Controller {
         });
     }
 
-
-
     private void customiseFactoryOperations(TableColumn<StockOperation, String> operationsStockColumn) {
         operationsStockColumn.setCellFactory(column -> {
             return new TableCell<StockOperation, String>() {
@@ -680,7 +707,6 @@ public class Controller {
             };
         });
     }
-
 
     /** a node which displays a value on hover, but is otherwise empty */
     class HoveredThresholdNodeLabel extends StackPane {
@@ -802,11 +828,35 @@ public class Controller {
 
                 cashFlow.addAll(operations);
             }catch (Exception e){
-                log(e.getMessage());
+                log(convertExceptionToString(e));
             }
         }
         fillOperationsTable();
         fillBenchmarkTable();
         fillTotalsLabels();
+    }
+
+    public void setDisableFalse(Node... nodes){
+        for(Node n : nodes){
+            n.setDisable(false);
+        }
+    }
+
+    public void setTabsDisableFalse(Tab... tabs){
+        for(Tab t : tabs){
+            t.setDisable(false);
+        }
+    }
+
+    public void setTabsDisableTrue(Tab... tabs){
+        for(Tab t : tabs){
+            t.setDisable(true);
+        }
+    }
+
+    public void setDisableTrue(Node... nodes){
+        for(Node n : nodes){
+            n.setDisable(true);
+        }
     }
 }
