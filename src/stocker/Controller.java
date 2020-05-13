@@ -486,7 +486,6 @@ public class Controller {
                 }catch (Exception e){
                     log(convertExceptionToString(e));
                 }
-
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
                 downloadStocks.setDisable(false);
                 setDisableFalse(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice,CalculateAndDisplay);
