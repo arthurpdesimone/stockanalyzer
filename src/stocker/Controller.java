@@ -76,17 +76,19 @@ public class Controller {
     Label buyAndHoldTotal;
     /** Time Frame Buttons */
     @FXML
-    Button FiveDays;
+    RadioButton FiveDays;
     @FXML
-    Button OneMonth;
+    RadioButton OneMonth;
     @FXML
-    Button ThreeMonths;
+    RadioButton ThreeMonths;
     @FXML
-    Button SixMonths;
+    RadioButton SixMonths;
     @FXML
-    Button OneYear;
+    RadioButton OneYear;
     @FXML
-    Button FiveYears;
+    RadioButton FiveYears;
+    @FXML
+    Button CalculateAndDisplay;
     @FXML
     TableView<Benchmark> benchmarks;
     @FXML
@@ -207,6 +209,33 @@ public class Controller {
         MACDSignal.setText(properties.getProperty("macd.signal"));
         RSI.setText(properties.getProperty("rsi"));
 
+        /** Time frame setup */
+        ToggleGroup group = new ToggleGroup();
+
+        group.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if(newValue.equals(FiveDays)) timeFrame = 5;
+            if(newValue.equals(OneMonth)) timeFrame = 30;
+            if(newValue.equals(ThreeMonths)) timeFrame = 90;
+            if(newValue.equals(SixMonths)) timeFrame = 180;
+            if(newValue.equals(OneYear)) timeFrame = 365;
+            if(newValue.equals(FiveYears)) timeFrame = 1825;
+            log("Time frame selected: "+timeFrame+" days.");
+        });
+
+        FiveDays.setToggleGroup(group);
+        FiveDays.setSelected(true);
+        OneMonth.setToggleGroup(group);
+        ThreeMonths.setToggleGroup(group);
+        SixMonths.setToggleGroup(group);
+        OneYear.setToggleGroup(group);
+        FiveYears.setToggleGroup(group);
+
+
+        CalculateAndDisplay.setOnAction(event -> {
+            calculate();
+            fillChart();
+        });
+
         /** Progress bar configuration*/
         downloadProgressBar.setMaxWidth(Double.MAX_VALUE);
         downloadProgressBar.getStylesheets().add(getClass().getResource("striped-progress.css").toExternalForm());
@@ -275,7 +304,7 @@ public class Controller {
             downloadSteps = 0.0;
             downloadProgressBar.setProgress(0.0);
 
-            setDisableTrue(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice);
+            setDisableTrue(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice,CalculateAndDisplay);
             /** Steps count */
             if(SMA1Enabled.isSelected()) downloadSteps++;
             if(MACDEnabled.isSelected()) downloadSteps++;
@@ -460,44 +489,11 @@ public class Controller {
 
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
                 downloadStocks.setDisable(false);
-                setDisableFalse(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice);
+                setDisableFalse(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice,CalculateAndDisplay);
             });
             thread.setPriority(Thread.MAX_PRIORITY);
             thread.start();
         });
-
-        /** Time frame actions */
-        FiveDays.setOnAction(event -> {
-            timeFrame = 5;
-            calculate();
-            fillChart();
-        });
-        OneMonth.setOnAction(event -> {
-            timeFrame = 30;
-            calculate();
-            fillChart();
-        });
-        ThreeMonths.setOnAction(event -> {
-            timeFrame = 90;
-            calculate();
-            fillChart();
-        });
-        SixMonths.setOnAction(event -> {
-            timeFrame = 180;
-            calculate();
-            fillChart();
-        });
-        OneYear.setOnAction(event -> {
-            timeFrame = 365;
-            calculate();
-            fillChart();
-        });
-        FiveYears.setOnAction(event -> {
-            timeFrame = 1825;
-            calculate();
-            fillChart();
-        });
-
     }
     /** Method to load the properties file*/
     public void propertiesSetup(){
@@ -512,7 +508,9 @@ public class Controller {
     /** Log routine
      * @param log The string to log*/
     public void log(String log){
-        logger.append("["+(System.currentTimeMillis()-currentTime)+"]:"+log+"\n");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date date = new Date();
+        logger.append("["+formatter.format(date)+"]: \t"+log+"\n");
         console.clear();
         console.setText(logger.toString());
         console.setScrollTop(Double.MAX_VALUE);
@@ -520,84 +518,89 @@ public class Controller {
 
     /** Method to fill chart*/
     private void fillChart(){
-        /** Closes stock configuration */
-        XYChart.Series closes = new XYChart.Series();
-        XYChart.Series SMA1Series = new XYChart.Series();
-        XYChart.Series MACDSeries = new XYChart.Series();
-        XYChart.Series MACDHistogramSeries = new XYChart.Series();
-        XYChart.Series MACDSignalSeries = new XYChart.Series();
-        XYChart.Series RSISeries = new XYChart.Series();
+        try{
+            /** Closes stock configuration */
+            XYChart.Series closes = new XYChart.Series();
+            XYChart.Series SMA1Series = new XYChart.Series();
+            XYChart.Series MACDSeries = new XYChart.Series();
+            XYChart.Series MACDHistogramSeries = new XYChart.Series();
+            XYChart.Series MACDSignalSeries = new XYChart.Series();
+            XYChart.Series RSISeries = new XYChart.Series();
 
-        chart.getXAxis().setAutoRanging(true);
-        chart.getYAxis().setAutoRanging(true);
-        chart.setCreateSymbols(false);
-        RSIChart.setCreateSymbols(false);
-        NumberAxis yAxis = (NumberAxis) chart.getYAxis();
-        yAxis.setForceZeroInRange(false);
-        String ticker = tickerChoice.getSelectionModel().getSelectedItem();
-        closes.setName(ticker);
-        ArrayList<Stock> stocksList = stocks.get(ticker);
+            chart.getXAxis().setAutoRanging(true);
+            chart.getYAxis().setAutoRanging(true);
+            chart.setCreateSymbols(false);
+            RSIChart.setCreateSymbols(false);
+            NumberAxis yAxis = (NumberAxis) chart.getYAxis();
+            yAxis.setForceZeroInRange(false);
+            String ticker = tickerChoice.getSelectionModel().getSelectedItem();
+            closes.setName(ticker);
+            ArrayList<Stock> stocksList = stocks.get(ticker);
 
-        /** SMAs creation*/
-        if(SMA1Enabled.isSelected()){
-            SMA1Series.setName("SMA");
-        }
-        /** MACD configuration */
-        if(MACDEnabled.isSelected()){
-            MACDChart.getXAxis().setAutoRanging(true);
-            MACDChart.getYAxis().setAutoRanging(true);
-            MACDChart.setCreateSymbols(false);
-            MACDSeries.setName("MACD");
-            MACDHistogramSeries.setName("MACD Histogram");
-            MACDSignalSeries.setName("MACD Signal");
-        }
-
-        /** RSI configuration */
-        if(RSIEnabled.isSelected()){
-            RSIChart.getXAxis().setAutoRanging(true);
-            RSIChart.getYAxis().setAutoRanging(true);
-            RSISeries.setName(ticker);
-        }
-        /** Clear all previous data */
-        closes.getData().removeAll(Collections.singleton(chart.getData().setAll()));
-        MACDChart.getData().removeAll(Collections.singleton(MACDChart.getData().setAll()));
-        RSIChart.getData().removeAll(Collections.singleton(RSIChart.getData().setAll()));
-
-        /** Loop through all the stocks at a given timeframe*/
-        for (int i = timeFrame;i >= 0; i--) {
-            Stock stock = stocksList.get(i);
-            String date = new SimpleDateFormat("yyyy-MM-dd", Locale. getDefault()). format(stock.getDate());
-
-            /** Closes and SMA chart */
-            XYChart.Data<String,Number> close = new XYChart.Data(date, stock.getClose());
-            close.setNode(new HoveredThresholdNodeLabel(stock));
-            closes.getData().add(close);
-
+            /** SMAs creation*/
             if(SMA1Enabled.isSelected()){
-                XYChart.Data<String,Number> SMA1Value = new XYChart.Data(date, stock.getSMA1());
-                SMA1Series.getData().add(SMA1Value);
+                SMA1Series.setName("SMA");
             }
+            /** MACD configuration */
             if(MACDEnabled.isSelected()){
-                /** MACD Histogram */
-                XYChart.Data<String,Number> MACDValue = new XYChart.Data(date, stock.getMACD());
-                XYChart.Data<String,Number> MACDHistValue = new XYChart.Data(date, stock.getMACDHist());
-                XYChart.Data<String,Number> MACDSignalValue = new XYChart.Data(date, stock.getMACDSignal());
-                MACDHistogramSeries.getData().add(MACDHistValue);
-                MACDSeries.getData().add(MACDValue);
-                MACDSignalValue.setNode(new NodeBuySell(stock));
-                MACDSignalSeries.getData().add(MACDSignalValue);
+                MACDChart.getXAxis().setAutoRanging(true);
+                MACDChart.getYAxis().setAutoRanging(true);
+                MACDChart.setCreateSymbols(false);
+                MACDSeries.setName("MACD");
+                MACDHistogramSeries.setName("MACD Histogram");
+                MACDSignalSeries.setName("MACD Signal");
             }
+
+            /** RSI configuration */
             if(RSIEnabled.isSelected()){
-                /** RSI Value */
-                XYChart.Data<String,Number> RSIValue = new XYChart.Data(date, stock.getRSI());
-                RSISeries.getData().add(RSIValue);
+                RSIChart.getXAxis().setAutoRanging(true);
+                RSIChart.getYAxis().setAutoRanging(true);
+                RSISeries.setName(ticker);
             }
+            /** Clear all previous data */
+            closes.getData().removeAll(Collections.singleton(chart.getData().setAll()));
+            MACDChart.getData().removeAll(Collections.singleton(MACDChart.getData().setAll()));
+            RSIChart.getData().removeAll(Collections.singleton(RSIChart.getData().setAll()));
+
+            /** Loop through all the stocks at a given timeframe*/
+            for (int i = timeFrame;i >= 0; i--) {
+                Stock stock = stocksList.get(i);
+                String date = new SimpleDateFormat("yyyy-MM-dd", Locale. getDefault()). format(stock.getDate());
+
+                /** Closes and SMA chart */
+                XYChart.Data<String,Number> close = new XYChart.Data(date, stock.getClose());
+                close.setNode(new HoveredThresholdNodeLabel(stock));
+                closes.getData().add(close);
+
+                if(SMA1Enabled.isSelected()){
+                    XYChart.Data<String,Number> SMA1Value = new XYChart.Data(date, stock.getSMA1());
+                    SMA1Series.getData().add(SMA1Value);
+                }
+                if(MACDEnabled.isSelected()){
+                    /** MACD Histogram */
+                    XYChart.Data<String,Number> MACDValue = new XYChart.Data(date, stock.getMACD());
+                    XYChart.Data<String,Number> MACDHistValue = new XYChart.Data(date, stock.getMACDHist());
+                    XYChart.Data<String,Number> MACDSignalValue = new XYChart.Data(date, stock.getMACDSignal());
+                    MACDHistogramSeries.getData().add(MACDHistValue);
+                    MACDSeries.getData().add(MACDValue);
+                    MACDSignalValue.setNode(new NodeBuySell(stock));
+                    MACDSignalSeries.getData().add(MACDSignalValue);
+                }
+                if(RSIEnabled.isSelected()){
+                    /** RSI Value */
+                    XYChart.Data<String,Number> RSIValue = new XYChart.Data(date, stock.getRSI());
+                    RSISeries.getData().add(RSIValue);
+                }
+            }
+
+            chart.getData().addAll(closes);
+            if(SMA1Enabled.isSelected()) chart.getData().addAll(SMA1Series);
+            if(MACDEnabled.isSelected()) MACDChart.getData().addAll(MACDSeries,MACDHistogramSeries,MACDSignalSeries);
+            if(RSIEnabled.isSelected()) RSIChart.getData().addAll(RSISeries);
+        }catch (Exception e){
+            log(convertExceptionToString(e));
         }
 
-        chart.getData().addAll(closes);
-        if(SMA1Enabled.isSelected()) chart.getData().addAll(SMA1Series);
-        if(MACDEnabled.isSelected()) MACDChart.getData().addAll(MACDSeries,MACDHistogramSeries,MACDSignalSeries);
-        if(RSIEnabled.isSelected()) RSIChart.getData().addAll(RSISeries);
     }
 
     private void fillOperationsTable(){
@@ -790,7 +793,6 @@ public class Controller {
                     Stock nextStock = stocksList.get(i-1);
                     /** Add the current stock to a time frame array*/
                     stocksTimeFrame.add(stock);
-                    //log("Comparing "+stock.getDate().toString()+ " to " + nextStock.getDate().toString());
                     /** Detects an up crossing */
                     if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
                         if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){

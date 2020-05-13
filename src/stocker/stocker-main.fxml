@@ -10,6 +10,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
@@ -453,32 +454,37 @@
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
                         </Label>
-                        <Button fx:id="FiveDays" mnemonicParsing="false" text="5D">
+                        <RadioButton fx:id="FiveDays" mnemonicParsing="false" text="5D">
                            <HBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
-                        </Button>
-                        <Button fx:id="OneMonth" mnemonicParsing="false" text="1M">
+                        </RadioButton>
+                        <RadioButton fx:id="OneMonth" mnemonicParsing="false" text="1M">
                            <HBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
-                        </Button>
-                        <Button fx:id="ThreeMonths" mnemonicParsing="false" text="3M">
+                        </RadioButton>
+                        <RadioButton fx:id="ThreeMonths" mnemonicParsing="false" text="3M">
                            <HBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
-                        </Button>
-                        <Button fx:id="SixMonths" mnemonicParsing="false" text="6M">
+                        </RadioButton>
+                        <RadioButton fx:id="SixMonths" mnemonicParsing="false" text="6M">
                            <HBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
-                        </Button>
-                        <Button fx:id="OneYear" mnemonicParsing="false" text="1Y">
+                        </RadioButton>
+                        <RadioButton fx:id="OneYear" mnemonicParsing="false" text="1Y">
                            <HBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
-                        </Button>
-                        <Button fx:id="FiveYears" mnemonicParsing="false" text="5Y">
+                        </RadioButton>
+                        <RadioButton fx:id="FiveYears" mnemonicParsing="false" text="5Y">
+                           <HBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </HBox.margin>
+                        </RadioButton>
+                        <Button fx:id="CalculateAndDisplay" mnemonicParsing="false" text="Calculate and Display">
                            <HBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
