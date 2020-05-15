@@ -284,6 +284,8 @@ public class Controller {
                 setTabsDisableFalse(databaseTab,closesTab,MACDTab,RSITab,buysAndSellsTab);
                 SingleSelectionModel<Tab> selectionModel = mainTabPane.getSelectionModel();
                 selectionModel.select(databaseTab);
+                controlsContainer.setVisible(true);
+                controlsContainer.managedProperty().bind(controlsContainer.visibleProperty());
             } catch (IOException e) {
                 e.printStackTrace();
                 log(convertExceptionToString(e));
