@@ -779,8 +779,7 @@ public class Controller {
         cashFlow.clear();
         benchmarkList.clear();
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-        /** Simplified hashmap*/
-        LinkedHashMap<String,Double> forecast = new LinkedHashMap<>();
+
 
         /** TODO Clear all lists on this point */
         for(String ticker : stocks.keySet()){
@@ -797,13 +796,13 @@ public class Controller {
                 /** Add the current stock to a time frame array*/
                 stocksTimeFrame.add(stock);
                 /** Detects an up crossing, a buy signal*/
-                if(nextStock.getRSI()>70){
-                    log(nextStock.getTicker()+" Sell opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
-                }else if(nextStock.getRSI() < 30){
-                    log(nextStock.getTicker()+" Buy opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
-                }
+//                if(nextStock.getRSI()>70){
+//                    log(nextStock.getTicker()+" Sell opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+//                }else if(nextStock.getRSI() < 30){
+//                    log(nextStock.getTicker()+" Buy opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+//                }
 
-                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
+                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal() && nextStock.getRSI()<50){
                     if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
                         StockOperation buy = new StockOperation(nextStock);
                         buy.setOperationType(BUY);
@@ -852,12 +851,6 @@ public class Controller {
     public void setTabsDisableFalse(Tab... tabs){
         for(Tab t : tabs){
             t.setDisable(false);
-        }
-    }
-
-    public void setTabsDisableTrue(Tab... tabs){
-        for(Tab t : tabs){
-            t.setDisable(true);
         }
     }
 
