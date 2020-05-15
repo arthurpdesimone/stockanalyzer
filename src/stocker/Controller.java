@@ -790,9 +790,15 @@ public class Controller {
             LinkedList<StockOperation> operations = new LinkedList<>();
             ArrayList<Stock> stocksList = stocks.get(ticker);
             ArrayList<Stock> stocksTimeFrame = new ArrayList<>();
-
+            /** In case the are fewer stocks records than requested */
+            int timeFrameSelected = 0;
+            if(timeFrame>stocksList.size()){
+                timeFrameSelected = stocksList.size();
+            }else{
+                timeFrameSelected = timeFrame;
+            }
             /** Looping thourgh the considered timeframe */
-            for (int i = timeFrame;i >= 1; i--) {
+            for (int i = timeFrameSelected;i >= 1; i--) {
                 Stock stock = stocksList.get(i);
                 Stock nextStock = stocksList.get(i-1);
                 /** Add the current stock to a time frame array*/
@@ -804,12 +810,12 @@ public class Controller {
 //                    log(nextStock.getTicker()+" Buy opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
 //                }
 
-                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal() && nextStock.getRSI()<50){
+                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal() && nextStock.getRSI() < 50){
                     if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
                         StockOperation buy = new StockOperation(nextStock);
                         buy.setOperationType(BUY);
                         operations.add(buy);
-                        log(nextStock.getTicker()+" Buy opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+                        log(nextStock.getTicker()+" Buy opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose()+ " RSI: "+ nextStock.getRSI());
                     }
                 }/** Detects a down crossing, a sell signal*/
                 else if (nextStock.getMACD()<nextStock.getMACDSignal() && stock.getMACD()>stock.getMACDSignal()){
