@@ -86,7 +86,7 @@ public class Controller {
     @FXML
     RadioButton OneYear;
     @FXML
-    RadioButton FiveYears;
+    RadioButton ThreeYears;
     @FXML
     Button CalculateAndDisplay;
     @FXML
@@ -218,7 +218,7 @@ public class Controller {
             if(newValue.equals(ThreeMonths)) timeFrame = 90;
             if(newValue.equals(SixMonths)) timeFrame = 180;
             if(newValue.equals(OneYear)) timeFrame = 365;
-            if(newValue.equals(FiveYears)) timeFrame = 1825;
+            if(newValue.equals(ThreeYears)) timeFrame = 1095;
             log("Time frame selected: "+timeFrame+" days.");
         });
 
@@ -228,7 +228,7 @@ public class Controller {
         ThreeMonths.setToggleGroup(group);
         SixMonths.setToggleGroup(group);
         OneYear.setToggleGroup(group);
-        FiveYears.setToggleGroup(group);
+        ThreeYears.setToggleGroup(group);
 
 
         CalculateAndDisplay.setOnAction(event -> {
@@ -304,7 +304,7 @@ public class Controller {
             downloadSteps = 0.0;
             downloadProgressBar.setProgress(0.0);
 
-            setDisableTrue(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice,CalculateAndDisplay);
+            setDisableTrue(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,ThreeYears,tickerChoice,CalculateAndDisplay);
             /** Steps count */
             if(SMA1Enabled.isSelected()) downloadSteps++;
             if(MACDEnabled.isSelected()) downloadSteps++;
@@ -488,7 +488,7 @@ public class Controller {
                 }
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
                 downloadStocks.setDisable(false);
-                setDisableFalse(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,FiveYears,tickerChoice,CalculateAndDisplay);
+                setDisableFalse(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,ThreeYears,tickerChoice,CalculateAndDisplay);
             });
             thread.setPriority(Thread.MAX_PRIORITY);
             thread.start();
@@ -603,7 +603,7 @@ public class Controller {
     }
 
     private void fillOperationsTable(){
-       SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+       SimpleDateFormat formatter = new SimpleDateFormat("EEEE dd/MM/yyyy", Locale.ENGLISH);
        reOrderListByDate(cashFlow);
        observableCashFlow = FXCollections.observableArrayList(cashFlow);
        /** Operations table*/
@@ -751,14 +751,14 @@ public class Controller {
                 });
 
                 if(stockOperation.getOperationType().equals(BUY)){
-                    polygon.setFill(Color.RED);
-                }else if(stockOperation.getOperationType().equals(SELL)){
                     Rotate rotate = new Rotate();
                     rotate.setAngle(180);
                     rotate.setPivotX(0);
                     rotate.setPivotY(0);
                     polygon.getTransforms().add(rotate);
                     polygon.setFill(Color.GREEN);
+                }else if(stockOperation.getOperationType().equals(SELL)){
+                    polygon.setFill(Color.RED);
                 }
                 pane.getChildren().add(polygon);
             }
@@ -776,74 +776,71 @@ public class Controller {
 
     /** Main method to calculate buys and sells*/
     public void calculate(){
-        Thread thread = new Thread(() -> {
-            try{
-                cashFlow.clear();
-                benchmarkList.clear();
-                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        cashFlow.clear();
+        benchmarkList.clear();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        /** Simplified hashmap*/
+        LinkedHashMap<String,Double> forecast = new LinkedHashMap<>();
 
-                /** TODO Clear all lists on this point */
-                for(String ticker : stocks.keySet()){
-                    log("Calculating buy and sell opportunities for : " + ticker);
-                    /** Initializing variables */
-                    LinkedList<StockOperation> operations = new LinkedList<>();
-                    ArrayList<Stock> stocksList = stocks.get(ticker);
-                    ArrayList<Stock> stocksTimeFrame = new ArrayList<>();
+        /** TODO Clear all lists on this point */
+        for(String ticker : stocks.keySet()){
+            log("Calculating buy and sell opportunities for : " + ticker);
+            /** Initializing variables */
+            LinkedList<StockOperation> operations = new LinkedList<>();
+            ArrayList<Stock> stocksList = stocks.get(ticker);
+            ArrayList<Stock> stocksTimeFrame = new ArrayList<>();
 
-                    /** Looping thourgh the considered timeframe */
-                    for (int i = timeFrame;i >= 1; i--) {
-                        Stock stock = stocksList.get(i);
-                        Stock nextStock = stocksList.get(i-1);
-                        /** Add the current stock to a time frame array*/
-                        stocksTimeFrame.add(stock);
-                        /** Detects an up crossing */
-                        if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
-                            if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
-                                StockOperation buy = new StockOperation(nextStock);
-                                buy.setOperationType(BUY);
-                                operations.add(buy);
-                                log(nextStock.getTicker()+" Buy opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
-                            }
-                        }/** Detects a down crossing*/
-                        else if (nextStock.getMACD()<nextStock.getMACDSignal() && stock.getMACD()>stock.getMACDSignal()){
-                            if(operations.size() != 0 && operations.getLast().getOperationType().equals(BUY)){
-                                StockOperation sell = new StockOperation(nextStock);
-                                sell.setOperationType(SELL);
-                                operations.add(sell);
-                                log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
-                            }
-                        }
-                        if(i==1){
-                            log("Last stock is "+formatter.format(nextStock.getDate()));
-                            stocksTimeFrame.add(nextStock);
-                            /** Sells last stock */
-                            if(operations.getLast().getOperationType().equals(BUY)){
-                                StockOperation sell = new StockOperation(nextStock);
-                                sell.setOperationType(SELL);
-                                operations.add(sell);
-                                log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
-                            }
-                        }
-                    }
-                    /** Create a benchmark for this operation */
-                    Benchmark b = new Benchmark();
-                    b.setOperations(operations);
-                    b.setStocks(stocksTimeFrame);
-                    benchmarkList.add(b);
-                    cashFlow.addAll(operations);
+            /** Looping thourgh the considered timeframe */
+            for (int i = timeFrame;i >= 1; i--) {
+                Stock stock = stocksList.get(i);
+                Stock nextStock = stocksList.get(i-1);
+                /** Add the current stock to a time frame array*/
+                stocksTimeFrame.add(stock);
+                /** Detects an up crossing, a buy signal*/
+                if(nextStock.getRSI()>70){
+                    log(nextStock.getTicker()+" Sell opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+                }else if(nextStock.getRSI() < 30){
+                    log(nextStock.getTicker()+" Buy opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
                 }
-                Platform.runLater(() -> {
-                    fillOperationsTable();
-                    fillBenchmarkTable();
-                    fillTotalsLabels();
-                });
-            }catch (Exception e){
-                log(convertExceptionToString(e));
-            }
-        });
-        thread.setPriority(Thread.MAX_PRIORITY);
-        thread.start();
 
+                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
+                    if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
+                        StockOperation buy = new StockOperation(nextStock);
+                        buy.setOperationType(BUY);
+                        operations.add(buy);
+                        log(nextStock.getTicker()+" Buy opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+                    }
+                }/** Detects a down crossing, a sell signal*/
+                else if (nextStock.getMACD()<nextStock.getMACDSignal() && stock.getMACD()>stock.getMACDSignal()){
+                    if(operations.size() != 0 && operations.getLast().getOperationType().equals(BUY)){
+                        StockOperation sell = new StockOperation(nextStock);
+                        sell.setOperationType(SELL);
+                        operations.add(sell);
+                        log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+                    }
+                }
+                if(i==1){
+                    log("Last stock is "+formatter.format(nextStock.getDate()));
+                    stocksTimeFrame.add(nextStock);
+                    /** Sells last stock */
+                    if(operations.getLast().getOperationType().equals(BUY)){
+                        StockOperation sell = new StockOperation(nextStock);
+                        sell.setOperationType(SELL);
+                        operations.add(sell);
+                        log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+                    }
+                }
+            }
+            /** Create a benchmark for this operation */
+            Benchmark b = new Benchmark();
+            b.setOperations(operations);
+            b.setStocks(stocksTimeFrame);
+            benchmarkList.add(b);
+            cashFlow.addAll(operations);
+        }
+        fillOperationsTable();
+        fillBenchmarkTable();
+        fillTotalsLabels();
     }
 
     public void setDisableFalse(Node... nodes){

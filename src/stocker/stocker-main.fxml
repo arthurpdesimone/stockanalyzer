@@ -479,7 +479,7 @@
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
                         </RadioButton>
-                        <RadioButton fx:id="FiveYears" mnemonicParsing="false" text="5Y">
+                        <RadioButton fx:id="ThreeYears" mnemonicParsing="false" text="3Y">
                            <HBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>
