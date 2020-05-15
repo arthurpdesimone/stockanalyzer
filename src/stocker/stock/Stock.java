@@ -11,6 +11,8 @@ public class Stock {
     private Double MACDHist;
     private Double MACDSignal;
     private Double RSI;
+    private Double RSIStochasticFastD;
+    private Double RSIStochasticFastK;
     private Date date;
 
     public Stock(String ticker, Double close, Date date) {
@@ -89,5 +91,21 @@ public class Stock {
 
     public void setRSI(Double RSI) {
         this.RSI = RSI;
+    }
+
+    public Double getRSIStochasticFastD() {
+        return RSIStochasticFastD;
+    }
+
+    public void setRSIStochasticFastD(Double RSIStochasticFastD) {
+        this.RSIStochasticFastD = RSIStochasticFastD;
+    }
+
+    public Double getRSIStochasticFastK() {
+        return RSIStochasticFastK;
+    }
+
+    public void setRSIStochasticFastK(Double RSIStochasticFastK) {
+        this.RSIStochasticFastK = RSIStochasticFastK;
     }
 }

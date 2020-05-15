@@ -66,6 +66,14 @@ public class Controller {
     @FXML
     TextField RSI;
     @FXML
+    TextField RSIStochastic;
+    @FXML
+    TextField RSIStochasticFastK;
+    @FXML
+    TextField RSIStochasticFastD;
+    @FXML
+    ComboBox<String> RSIStochasticFastDMA;
+    @FXML
     ChoiceBox<String> tickerChoice;
     /** Result total labels */
     @FXML
@@ -126,6 +134,8 @@ public class Controller {
     @FXML
     CheckBox RSIEnabled;
     @FXML
+    CheckBox RSIStochasticEnabled;
+    @FXML
     VBox controlsContainer;
     @FXML
     TabPane mainTabPane;
@@ -149,8 +159,6 @@ public class Controller {
     Button APIKEYSaveButton;
     /** Log variable */
     StringBuilder logger = new StringBuilder();
-    /** Log to keep track of time events*/
-    long currentTime = 0;
     /** Pause time*/
     static int PAUSE = 12000;
     /** Map containing tickers and stocks*/
@@ -173,8 +181,6 @@ public class Controller {
     String propertiesFileName = "app.properties";
     @FXML
     public void initialize(){
-        /** Time setting */
-        currentTime = System.currentTimeMillis();
         /** Webview bugfix https://steakrecords.com/pt/338480-javafx-webview-recaptcha-wont-work-unsupported-browser-javafx-webview-recaptcha.html*/
         APIWebView.getEngine().setUserAgent("use required / intended UA string");
         /** Webview initialization*/
@@ -183,6 +189,8 @@ public class Controller {
         propertiesSetup();
         API_KEY = properties.getProperty("api.key");
         log("API Key: "+API_KEY);
+        /** RSI Stochastic MA Type */
+        fillRSIStochasticMAType();
         /** API Key Workflow */
         SingleSelectionModel<Tab> tabSelectionModel = mainTabPane.getSelectionModel();
         if(!API_KEY.isEmpty()){
@@ -208,7 +216,11 @@ public class Controller {
         MACDSlow.setText(properties.getProperty("macd.slow"));
         MACDSignal.setText(properties.getProperty("macd.signal"));
         RSI.setText(properties.getProperty("rsi"));
-
+        RSIStochastic.setText(properties.getProperty("rsi.stochastic"));
+        RSIStochasticFastK.setText(properties.getProperty("rsi.stochastic.fastK"));
+        RSIStochasticFastD.setText(properties.getProperty("rsi.stochastic.fastD"));
+        SingleSelectionModel<String> RSIStochasticFastDMAType = RSIStochasticFastDMA.getSelectionModel();
+        RSIStochasticFastDMAType.select(Integer.parseInt(properties.getProperty("rsi.stochastic.fastDMA")));
         /** Time frame setup */
         ToggleGroup group = new ToggleGroup();
 
@@ -327,7 +339,7 @@ public class Controller {
                         log("Waiting "+PAUSE+"ms");
                         Thread.sleep(PAUSE);
                         tickerChoice.getItems().add(ticker);
-                        stocks.put(ticker,new ArrayList<Stock>());
+                        stocks.put(ticker,new ArrayList<>());
                         /**----------------------------- STOCK ----------------------------- */
                         log("Downloading "+ticker);
                         /** Download stocks prices */
@@ -481,6 +493,45 @@ public class Controller {
                             }
                             RSISeries.close();
                             log("Downloaded RSI for "+ticker);
+                            stepsConsumed[0]++;
+                            downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
+                        }
+                        if(RSIStochasticEnabled.isSelected()){
+                            /**----------------------------- RSI ----------------------------- */
+                            log("Waiting "+PAUSE+"ms");
+                            Thread.sleep(PAUSE);
+                            log("Downloading RSI Stochastic for "+ticker);
+                            String stockRSIStochasticString = downloadToString(URL+"STOCHRSI&symbol="+ticker+"&time_period="+RSIStochastic.getText()+"&fastkperiod="+RSIStochasticFastK.getText()+"&fastdperiod="+RSIStochasticFastD.getText()+"&fastdmatype="+RSIStochasticFastDMAType.getSelectedIndex()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
+                            BufferedReader RSIStochasticSeries = new BufferedReader(new StringReader(stockRSIStochasticString));
+                            RSIStochasticSeries.readLine(); /** Skip the first line */
+                            String RSIStochasticRow;
+                            while ((RSIStochasticRow = RSIStochasticSeries.readLine()) != null) {
+                                String[] data = RSIStochasticRow.split(",");
+                                String date = data[0];
+                                String rsiFastK = data[1];
+                                String rsiFastD = data[2];
+
+                                String pattern = "yyyy-MM-dd";
+                                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+                                try {
+                                    Date d = simpleDateFormat.parse(date);
+                                    Double rsiFastKValue = Double.parseDouble(rsiFastK);
+                                    Double rsiFastDValue = Double.parseDouble(rsiFastD);
+                                    /** Loop through all the stocks looking for a matching date*/
+                                    stocks.get(ticker).forEach(stock -> {
+                                        if(d.equals(stock.getDate())){
+                                            stock.setRSIStochasticFastK(rsiFastKValue);
+                                            stock.setRSIStochasticFastD(rsiFastDValue);
+                                        }
+                                    });
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                    log(convertExceptionToString(e));
+                                }
+
+                            }
+                            RSIStochasticSeries.close();
+                            log("Downloaded RSI Stochastic for "+ticker);
                             stepsConsumed[0]++;
                             downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
                         }
@@ -848,6 +899,19 @@ public class Controller {
         fillOperationsTable();
         fillBenchmarkTable();
         fillTotalsLabels();
+    }
+
+    public void fillRSIStochasticMAType(){
+        RSIStochasticFastDMA.getItems().addAll("0 = Simple Moving Average (SMA)",
+                "1 = Exponential Moving Average (EMA)",
+                "2 = Weighted Moving Average (WMA)",
+                "3 = Double Exponential Moving Average (DEMA)",
+                "4 = Triple Exponential Moving Average (TEMA)",
+                "5 = Triangular Moving Average (TRIMA)",
+                "6 = T3 Moving Average",
+                "7 = Kaufman Adaptive Moving Average (KAMA)",
+                "8 = MESA Adaptive Moving Average (MAMA)"
+                );
     }
 
     public void setDisableFalse(Node... nodes){

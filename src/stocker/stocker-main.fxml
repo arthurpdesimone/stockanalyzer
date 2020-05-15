@@ -7,6 +7,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressBar?>
@@ -71,7 +72,7 @@
                                  <children>
                                     <SplitPane dividerPositions="0.5125313283208021" prefHeight="160.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                       <items>
-                                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                                        <AnchorPane minHeight="0.0" minWidth="0.0">
                                              <children>
                                                 <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                    <children>
@@ -175,6 +176,66 @@
                                                                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                </HBox.margin>
                                                             </TextField>
+                                                            <Label alignment="CENTER" text="Days">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
+                                                         </children>
+                                                      </HBox>
+                                                      <Separator prefWidth="200.0" />
+                                                      <HBox>
+                                                         <children>
+                                                            <CheckBox fx:id="RSIStochasticEnabled" mnemonicParsing="false" selected="true">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </CheckBox>
+                                                            <Label alignment="CENTER" text="RSI Stochastic">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
+                                                            <TextField fx:id="RSIStochastic" alignment="CENTER" prefWidth="50.0" text="10">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </TextField>
+                                                            <Label alignment="CENTER" text="Days">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
+                                                            <TextField fx:id="RSIStochasticFastK" alignment="CENTER" prefWidth="50.0" text="10">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </TextField>
+                                                            <Label alignment="CENTER" text="Fast %K">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
+                                                            <TextField fx:id="RSIStochasticFastD" alignment="CENTER" prefWidth="50.0" text="10">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </TextField>
+                                                            <Label alignment="CENTER" text="Fast %D">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
+                                                            <ComboBox fx:id="RSIStochasticFastDMA" prefWidth="150.0">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </ComboBox>
+                                                            <Label alignment="CENTER" text="Fast %D MA Type">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                               </HBox.margin>
+                                                            </Label>
                                                          </children>
                                                       </HBox>
                                                       <Separator prefWidth="200.0" />
@@ -232,7 +293,7 @@
                                                 </VBox>
                                              </children>
                                           </AnchorPane>
-                                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                                        <AnchorPane minHeight="0.0" minWidth="0.0">
                                              <children>
                                                 <VBox layoutX="14.0" layoutY="62.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                    <children>
@@ -302,6 +363,22 @@
                                       <yAxis>
                                         <NumberAxis label="Value" side="LEFT" />
                                       </yAxis>
+                                    </LineChart>
+                                 </children>
+                              </AnchorPane>
+                           </content>
+                        </Tab>
+                        <Tab fx:id="RSIStochasticTab" style="-fx-font-size: 18px;" text="RSI Stochastic">
+                           <content>
+                              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                 <children>
+                                    <LineChart fx:id="RSIStochasticChart" animated="false" title="RSI Stochastic" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                       <xAxis>
+                                          <CategoryAxis label="Days" side="BOTTOM" />
+                                       </xAxis>
+                                       <yAxis>
+                                          <NumberAxis label="Value" side="LEFT" />
+                                       </yAxis>
                                     </LineChart>
                                  </children>
                               </AnchorPane>
