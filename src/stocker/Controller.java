@@ -56,8 +56,6 @@ public class Controller {
     @FXML
     TextArea console;
     @FXML
-    TextField SMA1;
-    @FXML
     TextField MACDSlow;
     @FXML
     TextField MACDFast;
@@ -65,14 +63,6 @@ public class Controller {
     TextField MACDSignal;
     @FXML
     TextField RSI;
-    @FXML
-    TextField RSIStochastic;
-    @FXML
-    TextField RSIStochasticFastK;
-    @FXML
-    TextField RSIStochasticFastD;
-    @FXML
-    ComboBox<String> RSIStochasticFastDMA;
     @FXML
     ChoiceBox<String> tickerChoice;
     /** Result total labels */
@@ -128,13 +118,9 @@ public class Controller {
     @FXML
     ProgressBar downloadProgressBar;
     @FXML
-    CheckBox SMA1Enabled;
-    @FXML
     CheckBox MACDEnabled;
     @FXML
     CheckBox RSIEnabled;
-    @FXML
-    CheckBox RSIStochasticEnabled;
     @FXML
     VBox controlsContainer;
     @FXML
@@ -189,8 +175,6 @@ public class Controller {
         propertiesSetup();
         API_KEY = properties.getProperty("api.key");
         log("API Key: "+API_KEY);
-        /** RSI Stochastic MA Type */
-        fillRSIStochasticMAType();
         /** API Key Workflow */
         SingleSelectionModel<Tab> tabSelectionModel = mainTabPane.getSelectionModel();
         if(!API_KEY.isEmpty()){
@@ -211,16 +195,10 @@ public class Controller {
             alert.showAndWait();
         }
         /** Database initial setup*/
-        SMA1.setText(properties.getProperty("sma1"));
         MACDFast.setText(properties.getProperty("macd.fast"));
         MACDSlow.setText(properties.getProperty("macd.slow"));
         MACDSignal.setText(properties.getProperty("macd.signal"));
         RSI.setText(properties.getProperty("rsi"));
-        RSIStochastic.setText(properties.getProperty("rsi.stochastic"));
-        RSIStochasticFastK.setText(properties.getProperty("rsi.stochastic.fastK"));
-        RSIStochasticFastD.setText(properties.getProperty("rsi.stochastic.fastD"));
-        SingleSelectionModel<String> RSIStochasticFastDMAType = RSIStochasticFastDMA.getSelectionModel();
-        RSIStochasticFastDMAType.select(Integer.parseInt(properties.getProperty("rsi.stochastic.fastDMA")));
         /** Time frame setup */
         ToggleGroup group = new ToggleGroup();
 
@@ -320,7 +298,6 @@ public class Controller {
 
             setDisableTrue(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,ThreeYears,tickerChoice,CalculateAndDisplay);
             /** Steps count */
-            if(SMA1Enabled.isSelected()) downloadSteps++;
             if(MACDEnabled.isSelected()) downloadSteps++;
             if(RSIEnabled.isSelected()) downloadSteps++;
             downloadSteps = downloadSteps*tickerList.getItems().size();
@@ -332,10 +309,8 @@ public class Controller {
             final double[] stepsConsumed = {0.0};
 
             Thread thread = new Thread(() -> {
-                try{
-                    ObservableList<String> tickersToDownload = tickerList.getItems();
-                    for(int i = 0; i < tickersToDownload.size(); i++){
-                        String ticker = tickersToDownload.get(i);
+                tickerList.getItems().forEach(ticker -> {
+                    try{
                         log("Waiting "+PAUSE+"ms");
                         Thread.sleep(PAUSE);
                         tickerChoice.getItems().add(ticker);
@@ -382,41 +357,6 @@ public class Controller {
                             stocksList.getItems().add(ticker+" First stock: "+firstDate+"\t Last Stock: "+lastDate+"\t Entries: "+stocks.get(ticker).size());
                         });
 
-                        if(SMA1Enabled.isSelected()){
-                            log("Waiting "+PAUSE+"ms");
-                            Thread.sleep(PAUSE);
-                            /**----------------------------- SMA 1 ----------------------------- */
-                            log("Downloading SMA1 for "+ticker);
-                            String stockSMAString = downloadToString(URL+"SMA&symbol="+ticker+"&interval=daily&time_period="+SMA1.getText()+"&series_type=close&datatype=csv&apikey="+API_KEY);
-                            BufferedReader SMA1Series = new BufferedReader(new StringReader(stockSMAString));
-                            SMA1Series.readLine(); /** Skip the first line */
-                            String rowSMA1;
-                            while ((rowSMA1 = SMA1Series.readLine()) != null) {
-                                String[] data = rowSMA1.split(",");
-                                String date = data[0];
-                                String sma1 = data[1];
-                                String pattern = "yyyy-MM-dd";
-                                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                                try {
-                                    Date d = simpleDateFormat.parse(date);
-                                    Double SMA1Value = Double.parseDouble(sma1);
-                                    /** Loop through all the stocks looking for a matching date*/
-                                    stocks.get(ticker).forEach(stock -> {
-                                        if(d.equals(stock.getDate())){
-                                            stock.setSMA1(SMA1Value);
-                                        }
-                                    });
-                                } catch (ParseException e) {
-                                    e.printStackTrace();
-                                    log(convertExceptionToString(e));
-                                }
-
-                            }
-                            SMA1Series.close();
-                            log("Downloaded SMA1 for "+ticker);
-                            stepsConsumed[0]++;
-                            downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
-                        }
 
                         if(MACDEnabled.isSelected()){
                             /**----------------------------- MACD ----------------------------- */
@@ -496,49 +436,10 @@ public class Controller {
                             stepsConsumed[0]++;
                             downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
                         }
-                        if(RSIStochasticEnabled.isSelected()){
-                            /**----------------------------- RSI ----------------------------- */
-                            log("Waiting "+PAUSE+"ms");
-                            Thread.sleep(PAUSE);
-                            log("Downloading RSI Stochastic for "+ticker);
-                            String stockRSIStochasticString = downloadToString(URL+"STOCHRSI&symbol="+ticker+"&time_period="+RSIStochastic.getText()+"&fastkperiod="+RSIStochasticFastK.getText()+"&fastdperiod="+RSIStochasticFastD.getText()+"&fastdmatype="+RSIStochasticFastDMAType.getSelectedIndex()+"&interval=daily&series_type=close&datatype=csv&apikey="+API_KEY);
-                            BufferedReader RSIStochasticSeries = new BufferedReader(new StringReader(stockRSIStochasticString));
-                            RSIStochasticSeries.readLine(); /** Skip the first line */
-                            String RSIStochasticRow;
-                            while ((RSIStochasticRow = RSIStochasticSeries.readLine()) != null) {
-                                String[] data = RSIStochasticRow.split(",");
-                                String date = data[0];
-                                String rsiFastK = data[1];
-                                String rsiFastD = data[2];
-
-                                String pattern = "yyyy-MM-dd";
-                                SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                                try {
-                                    Date d = simpleDateFormat.parse(date);
-                                    Double rsiFastKValue = Double.parseDouble(rsiFastK);
-                                    Double rsiFastDValue = Double.parseDouble(rsiFastD);
-                                    /** Loop through all the stocks looking for a matching date*/
-                                    stocks.get(ticker).forEach(stock -> {
-                                        if(d.equals(stock.getDate())){
-                                            stock.setRSIStochasticFastK(rsiFastKValue);
-                                            stock.setRSIStochasticFastD(rsiFastDValue);
-                                        }
-                                    });
-                                } catch (ParseException e) {
-                                    e.printStackTrace();
-                                    log(convertExceptionToString(e));
-                                }
-
-                            }
-                            RSIStochasticSeries.close();
-                            log("Downloaded RSI Stochastic for "+ticker);
-                            stepsConsumed[0]++;
-                            downloadProgressBar.setProgress(stepsConsumed[0]/downloadSteps);
-                        }
-                    }
                 }catch (Exception e){
                     log(convertExceptionToString(e));
-                }
+                    }
+                });
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
                 downloadStocks.setDisable(false);
                 setDisableFalse(FiveDays,OneMonth,ThreeMonths,SixMonths,OneYear,ThreeYears,tickerChoice,CalculateAndDisplay);
@@ -573,11 +474,11 @@ public class Controller {
         try{
             /** Closes stock configuration */
             XYChart.Series closes = new XYChart.Series();
-            XYChart.Series SMA1Series = new XYChart.Series();
             XYChart.Series MACDSeries = new XYChart.Series();
             XYChart.Series MACDHistogramSeries = new XYChart.Series();
             XYChart.Series MACDSignalSeries = new XYChart.Series();
             XYChart.Series RSISeries = new XYChart.Series();
+
 
             chart.getXAxis().setAutoRanging(true);
             chart.getYAxis().setAutoRanging(true);
@@ -589,10 +490,7 @@ public class Controller {
             closes.setName(ticker);
             ArrayList<Stock> stocksList = stocks.get(ticker);
 
-            /** SMAs creation*/
-            if(SMA1Enabled.isSelected()){
-                SMA1Series.setName("SMA");
-            }
+
             /** MACD configuration */
             if(MACDEnabled.isSelected()){
                 MACDChart.getXAxis().setAutoRanging(true);
@@ -609,6 +507,7 @@ public class Controller {
                 RSIChart.getYAxis().setAutoRanging(true);
                 RSISeries.setName(ticker);
             }
+
             /** Clear all previous data */
             closes.getData().removeAll(Collections.singleton(chart.getData().setAll()));
             MACDChart.getData().removeAll(Collections.singleton(MACDChart.getData().setAll()));
@@ -624,10 +523,6 @@ public class Controller {
                 close.setNode(new HoveredThresholdNodeLabel(stock));
                 closes.getData().add(close);
 
-                if(SMA1Enabled.isSelected()){
-                    XYChart.Data<String,Number> SMA1Value = new XYChart.Data(date, stock.getSMA1());
-                    SMA1Series.getData().add(SMA1Value);
-                }
                 if(MACDEnabled.isSelected()){
                     /** MACD Histogram */
                     XYChart.Data<String,Number> MACDValue = new XYChart.Data(date, stock.getMACD());
@@ -646,7 +541,6 @@ public class Controller {
             }
 
             chart.getData().addAll(closes);
-            if(SMA1Enabled.isSelected()) chart.getData().addAll(SMA1Series);
             if(MACDEnabled.isSelected()) MACDChart.getData().addAll(MACDSeries,MACDHistogramSeries,MACDSignalSeries);
             if(RSIEnabled.isSelected()) RSIChart.getData().addAll(RSISeries);
         }catch (Exception e){
@@ -855,12 +749,6 @@ public class Controller {
                 /** Add the current stock to a time frame array*/
                 stocksTimeFrame.add(stock);
                 /** Detects an up crossing, a buy signal*/
-//                if(nextStock.getRSI()>70){
-//                    log(nextStock.getTicker()+" Sell opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
-//                }else if(nextStock.getRSI() < 30){
-//                    log(nextStock.getTicker()+" Buy opportunity due to RSI detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
-//                }
-
                 if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal() && nextStock.getRSI() < 50){
                     if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
                         StockOperation buy = new StockOperation(nextStock);
@@ -899,19 +787,6 @@ public class Controller {
         fillOperationsTable();
         fillBenchmarkTable();
         fillTotalsLabels();
-    }
-
-    public void fillRSIStochasticMAType(){
-        RSIStochasticFastDMA.getItems().addAll("0 = Simple Moving Average (SMA)",
-                "1 = Exponential Moving Average (EMA)",
-                "2 = Weighted Moving Average (WMA)",
-                "3 = Double Exponential Moving Average (DEMA)",
-                "4 = Triple Exponential Moving Average (TEMA)",
-                "5 = Triangular Moving Average (TRIMA)",
-                "6 = T3 Moving Average",
-                "7 = Kaufman Adaptive Moving Average (KAMA)",
-                "8 = MESA Adaptive Moving Average (MAMA)"
-                );
     }
 
     public void setDisableFalse(Node... nodes){
