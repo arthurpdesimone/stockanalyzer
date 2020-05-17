@@ -49,7 +49,7 @@ public class Benchmark {
     }
 
     public int getSuccessOperation(){
-        final double[] success = {0};
+        final int[] success = {0};
         operations.forEach(stockOperation -> {
             double partialProfit = 1.0;
             if(stockOperation.getOperationType().equals(BUY)){
@@ -62,7 +62,7 @@ public class Benchmark {
             }
             partialProfit = 1.0;
         });
-        return 0;
+        return success[0];
     }
 
 
