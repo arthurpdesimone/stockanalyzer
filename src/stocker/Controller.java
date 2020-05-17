@@ -69,6 +69,8 @@ public class Controller {
     @FXML
     Label operationsTotal;
     @FXML
+    Label successTotal;
+    @FXML
     Label profitTotal;
     @FXML
     Label buyAndHoldTotal;
@@ -587,9 +589,13 @@ public class Controller {
         final int[] operations = {0};
         final double[] profit = {0.0};
         final double[] buyAndHold = {0.0};
+        final int[] success = {0};
         benchmarkList.forEach(benchmark -> {
             int operationPartial = benchmark.getOperationsBuyAndSell();
             operations[0] += operationPartial;
+
+            int successPartial = benchmark.getSuccessOperation();
+            success[0] += successPartial;
 
             String profitPartial = benchmark.getProfit();
             profitPartial = profitPartial.replace("%","");
@@ -606,6 +612,7 @@ public class Controller {
 
         /** Profit is the average of the partial profits */
         operationsTotal.setText(operations[0]+"");
+        successTotal.setText(success[0]+"");
         profitTotal.setText(df.format(profit[0]/benchmarkList.size())+"%");
         buyAndHoldTotal.setText(df.format(buyAndHold[0]/benchmarkList.size())+"%");
     }

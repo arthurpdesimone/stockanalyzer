@@ -48,6 +48,23 @@ public class Benchmark {
         return df.format((profit[0]-1)*100);
     }
 
+    public int getSuccessOperation(){
+        final double[] success = {0};
+        operations.forEach(stockOperation -> {
+            double partialProfit = 1.0;
+            if(stockOperation.getOperationType().equals(BUY)){
+                partialProfit = partialProfit/stockOperation.getStock().getClose();
+            }else {
+                partialProfit = partialProfit * stockOperation.getStock().getClose();
+            }
+            if(partialProfit > 1){
+                success[0]++;
+            }
+            partialProfit = 1.0;
+        });
+        return 0;
+    }
+
 
     public String getBuyAndHold() {
         double firstClose = stocks.get(0).getClose();
