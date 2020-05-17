@@ -23,6 +23,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.transform.Rotate;
 import javafx.scene.web.WebView;
+import javafx.stage.FileChooser;
 import stocker.stock.Benchmark;
 import stocker.stock.Stock;
 import stocker.stock.StockManager;
@@ -117,6 +118,8 @@ public class Controller {
     TextField addTickerTextField;
     @FXML
     Button addTickerButton;
+    @FXML
+    Button openTickerButton;
     @FXML
     ProgressBar downloadProgressBar;
     @FXML
@@ -288,6 +291,27 @@ public class Controller {
             tickerList.getItems().add(addTickerTextField.getText());
             addTickerTextField.clear();
         });
+        /** Open ticker list */
+        openTickerButton.setOnAction(event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Open Ticker List");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            File selectedFile = fileChooser.showOpenDialog(null);
+            if(selectedFile != null){
+                tickerList.getItems().clear();
+                try {
+                    FileReader fr = new FileReader(selectedFile);
+                    BufferedReader bufferedReader = new BufferedReader(fr);
+                    String row;
+                    while ((row = bufferedReader.readLine()) != null){
+                        tickerList.getItems().add(row);
+                    }
+                } catch (Exception e) {
+                    log(convertExceptionToString(e));
+                }
+            }
+        });
 
         /** Main sequence download */
         downloadStocks.setOnAction(event -> {
@@ -440,7 +464,16 @@ public class Controller {
                         }
                 }catch (Exception e){
                     log(convertExceptionToString(e));
+                    if(e instanceof ArrayIndexOutOfBoundsException){
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Ticker "+ ticker +" not available");
+                            alert.setHeaderText("Sorry, the API couldn't find data for your stock.");
+                            alert.setContentText(null);
+                            alert.showAndWait();
+                        });
                     }
+                }
                 });
                 Platform.runLater(() -> {if(tickerChoice.getItems().size()>0) tickerChoice.getSelectionModel().select(0);});
                 downloadStocks.setDisable(false);
@@ -636,6 +669,7 @@ public class Controller {
                             currentRow.setStyle("-fx-background-color:lightcoral");
                         else
                             currentRow.setStyle("-fx-background-color:lightgreen");
+
                     }
                 }
             };
@@ -656,9 +690,10 @@ public class Controller {
 
                     if (!isEmpty()) {
                         if(item.equals("BUY"))
-                            currentRow.setStyle("-fx-background-color:lightcoral");
-                        else
                             currentRow.setStyle("-fx-background-color:lightgreen");
+                        else
+                            currentRow.setStyle("-fx-background-color:lightcoral");
+
                     }
                 }
             };
@@ -776,12 +811,15 @@ public class Controller {
                     log("Last stock is "+formatter.format(nextStock.getDate()));
                     stocksTimeFrame.add(nextStock);
                     /** Sells last stock */
-                    if(operations.getLast().getOperationType().equals(BUY)){
+                    if(operations.size() != 0 && operations.getLast().getOperationType().equals(BUY)){
                         StockOperation sell = new StockOperation(nextStock);
                         sell.setOperationType(SELL);
                         operations.add(sell);
                         log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
                     }
+                }
+                if(operations.size() == 0){
+
                 }
             }
             /** Create a benchmark for this operation */

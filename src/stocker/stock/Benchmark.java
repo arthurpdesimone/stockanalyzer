@@ -50,17 +50,17 @@ public class Benchmark {
 
     public int getSuccessOperation(){
         final int[] success = {0};
+        final double[] partialProfit = {1.0};
         operations.forEach(stockOperation -> {
-            double partialProfit = 1.0;
             if(stockOperation.getOperationType().equals(BUY)){
-                partialProfit = partialProfit/stockOperation.getStock().getClose();
+                partialProfit[0] = partialProfit[0] /stockOperation.getStock().getClose();
             }else {
-                partialProfit = partialProfit * stockOperation.getStock().getClose();
+                partialProfit[0] = partialProfit[0] * stockOperation.getStock().getClose();
             }
-            if(partialProfit > 1){
+            if(partialProfit[0] > 1){
                 success[0]++;
+                partialProfit[0] = 1.0;
             }
-            partialProfit = 1.0;
         });
         return success[0];
     }

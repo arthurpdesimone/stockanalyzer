@@ -187,6 +187,11 @@
                                                                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                                      </HBox.margin>
                                                                   </Button>
+                                                                  <Button fx:id="openTickerButton" mnemonicParsing="false" text="Open Ticker">
+                                                                     <HBox.margin>
+                                                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                                     </HBox.margin>
+                                                                  </Button>
                                                                </children>
                                                                <VBox.margin>
                                                                   <Insets />
@@ -372,7 +377,7 @@
                                              </HBox.margin>
                                           </Label>
                                           <Separator orientation="VERTICAL" />
-                                          <Label text="Success:">
+                                          <Label text="Successful pairs:">
                                              <font>
                                                 <Font size="16.0" />
                                              </font>
