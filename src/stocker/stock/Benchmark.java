@@ -72,6 +72,9 @@ public class Benchmark {
         return df.format((lastClose/firstClose-1)*100);
     }
 
+    public Stock getFirstStock(){
+        return getStocks().get(0);
+    }
     public String getStock(){
         return getStocks().get(0).getTicker();
     }

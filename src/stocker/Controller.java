@@ -519,6 +519,7 @@ public class Controller {
             chart.getYAxis().setAutoRanging(true);
             chart.setCreateSymbols(false);
             RSIChart.setCreateSymbols(false);
+            //resultsChart.setCreateSymbols(false);
             NumberAxis yAxis = (NumberAxis) chart.getYAxis();
             yAxis.setForceZeroInRange(false);
             String ticker = tickerChoice.getSelectionModel().getSelectedItem();
@@ -543,10 +544,15 @@ public class Controller {
                 RSISeries.setName(ticker);
             }
 
+
+
             /** Clear all previous data */
             closes.getData().removeAll(Collections.singleton(chart.getData().setAll()));
             MACDChart.getData().removeAll(Collections.singleton(MACDChart.getData().setAll()));
             RSIChart.getData().removeAll(Collections.singleton(RSIChart.getData().setAll()));
+
+
+
 
             /** Loop through all the stocks at a given timeframe*/
             for (int i = timeFrame;i >= 0; i--) {
@@ -573,6 +579,8 @@ public class Controller {
                     XYChart.Data<String,Number> RSIValue = new XYChart.Data(date, stock.getRSI());
                     RSISeries.getData().add(RSIValue);
                 }
+
+
             }
 
             chart.getData().addAll(closes);
@@ -584,9 +592,46 @@ public class Controller {
 
     }
 
+//    private void fillResultsChart(){
+//        XYChart.Series BuyAndHoldSeries = new XYChart.Series();
+//        XYChart.Series StrategySeries = new XYChart.Series();
+//        BuyAndHoldSeries.setName("Buy and Hold");
+//        resultsChart.getData().removeAll(Collections.singleton(resultsChart.getData().setAll()));
+//        NumberAxis yAxis = (NumberAxis) resultsChart.getYAxis();
+//        yAxis.setForceZeroInRange(false);
+//
+//        LinkedHashMap<Date,Double> buyAndHold = new LinkedHashMap<>();
+//        LinkedHashMap<Date,Double> strategy = new LinkedHashMap<>();
+//        /** Buy and hold cumulative loop*/
+//        stocks.forEach((ticker, stocksList) -> {
+//            for (int i = timeFrame;i >= 1; i--) {
+//                Stock stock = stocksList.get(i);
+//                /** If null, add a new record*/
+//                if(buyAndHold.get(stock.getDate()) == null){
+//                    buyAndHold.put(stock.getDate(),stock.getClose());
+//                /** If not, sum the value to the previous close*/
+//                }else{
+//                    buyAndHold.put(stock.getDate(),buyAndHold.get(stock.getDate())+stock.getClose());
+//                }
+//            }
+//        });
+//        /** Normalize the values from 0 to 100% */
+//        Map.Entry<Date, Double> firstEntry = buyAndHold.entrySet().iterator().next();
+//        Double firstEntryClose = firstEntry.getValue();
+//        /** Iterate and normalize */
+//        buyAndHold.forEach((dateRecord, closeSum) -> {
+//            String date = new SimpleDateFormat("yyyy-MM-dd", Locale. getDefault()). format(dateRecord);
+//            Double normalizedClose = closeSum*100/firstEntryClose;
+//            XYChart.Data<String,Number> closeSumRecord = new XYChart.Data(date, normalizedClose);
+//            BuyAndHoldSeries.getData().add(closeSumRecord);
+//        });
+//        /** Add buy and hold data to the chart */
+//        resultsChart.getData().addAll(BuyAndHoldSeries);
+//    }
+
     private void fillOperationsTable(){
        SimpleDateFormat formatter = new SimpleDateFormat("EEEE dd/MM/yyyy", Locale.ENGLISH);
-       reOrderListByDate(cashFlow);
+       reOrderStockOperationListByDate(cashFlow);
        observableCashFlow = FXCollections.observableArrayList(cashFlow);
        /** Operations table*/
        operations.setItems(observableCashFlow);
@@ -769,7 +814,6 @@ public class Controller {
         benchmarkList.clear();
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
 
-
         /** TODO Clear all lists on this point */
         for(String ticker : stocks.keySet()){
             log("Calculating buy and sell opportunities for : " + ticker);
@@ -780,7 +824,7 @@ public class Controller {
             /** In case the are fewer stocks records than requested */
             int timeFrameSelected = 0;
             if(timeFrame>stocksList.size()){
-                timeFrameSelected = stocksList.size();
+                timeFrameSelected = stocksList.size()-1;
             }else{
                 timeFrameSelected = timeFrame;
             }
@@ -791,7 +835,7 @@ public class Controller {
                 /** Add the current stock to a time frame array*/
                 stocksTimeFrame.add(stock);
                 /** Detects an up crossing, a buy signal*/
-                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal() && nextStock.getRSI() < 50){
+                if(nextStock.getMACD()>nextStock.getMACDSignal() && stock.getMACD()<stock.getMACDSignal()){
                     if(operations.size() == 0 || operations.getLast().getOperationType().equals(SELL)){
                         StockOperation buy = new StockOperation(nextStock);
                         buy.setOperationType(BUY);
@@ -804,7 +848,7 @@ public class Controller {
                         StockOperation sell = new StockOperation(nextStock);
                         sell.setOperationType(SELL);
                         operations.add(sell);
-                        log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
+                        log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose()+ " RSI: "+ nextStock.getRSI());
                     }
                 }
                 if(i==1){
@@ -818,9 +862,6 @@ public class Controller {
                         log(nextStock.getTicker()+" Sell opportunity detected on "+formatter.format(nextStock.getDate())+ " value : "+nextStock.getClose());
                     }
                 }
-                if(operations.size() == 0){
-
-                }
             }
             /** Create a benchmark for this operation */
             Benchmark b = new Benchmark();
@@ -831,6 +872,7 @@ public class Controller {
         }
         fillOperationsTable();
         fillBenchmarkTable();
+        //fillResultsChart();
         fillTotalsLabels();
     }
 

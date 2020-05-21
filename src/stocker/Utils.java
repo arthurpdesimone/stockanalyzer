@@ -17,8 +17,11 @@ import java.util.Scanner;
 import static java.nio.file.StandardCopyOption.*;
 
 public class Utils {
-    public static void reOrderListByDate(ArrayList<StockOperation> stocks) {
+    public static void reOrderStockOperationListByDate(ArrayList<StockOperation> stocks) {
         stocks.sort(Comparator.comparing(StockOperation::getDate));
+    }
+    public static void reOrderStockListByDate(ArrayList<Stock> stocks) {
+        stocks.sort(Comparator.comparing(Stock::getDate));
     }
 
     public static String downloadToString(String url) throws IOException {
